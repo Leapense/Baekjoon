@@ -14,4 +14,3 @@ public class Main {
 		System.out.println(fibo[n]);
 	}
 }
-// Don't use recursion(?) function.
