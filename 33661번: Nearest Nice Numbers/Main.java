@@ -19,7 +19,7 @@ public class Main {
             while (s != null && s.trim().isEmpty()) s = br.readLine();
             BigDecimal x = new BigDecimal(s.trim());
             BigDecimal a = x.multiply(BigDecimal.valueOf(D));
-            BigDecimal gBI = a.toBigInteger();
+            BigInteger gBI = a.toBigInteger();
             long g = gBI.longValue();
             sumFloors += g;
 
