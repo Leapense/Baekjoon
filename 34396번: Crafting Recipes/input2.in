@@ -1,0 +1,8 @@
+3
+ConductiveHinge 4
+SmoothGear 4
+SleekBolt 3
+3
+AerodynamicGearbox 2 SleekBolt 1 SmoothGear 4
+Capstone 4 StrongPlate 9 SleekBolt 3 AerodynamicGearbox 2 ConductiveHinge 5
+StrongPlate 3 SmoothGear 4 SmoothGear 4 AerodynamicGearbox 5
