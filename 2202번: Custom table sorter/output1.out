@@ -1,0 +1,11 @@
+Hotel rooms and locations
+  Hotel_foobar,CBD,*
+  Dug_Inn,Airport,*
+  Lowton_Hotel,Airport,**
+
+  Lowton_Hotel,Airport,**
+  Dug_Inn,Airport,*
+  Hotel_foobar,CBD,*
+
+General enquiry
+  One_value,here
