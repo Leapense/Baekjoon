@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Polly Nomials – 최소 키입력 시각화</title>
+    <style>
+        :root {
+            --bg: #0b1020;
+            --panel: #111833;
+            --muted: #8aa0c2;
+            --fg: #e8edff;
+            --brand: #6ea8fe;
+            --accent: #b794f4;
+            --ok: #7ee787;
+            --warn: #ffcc66;
+            --danger: #ff7b72;
+            --chip: #1a2246;
+            --chip-done: #24356f;
+            --chip-active: #2f4ab0;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #0b1020, #0c1428);
+            color: var(--fg);
+            font: 16px/1.5 system-ui, Segoe UI, Roboto, Apple SD Gothic Neo, \B3CB\C6C0, Malgun Gothic, sans-serif
+        }
+
+        a {
+            color: var(--brand)
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 28px
+        }
+
+        h1 {
+            font-size: 26px;
+            margin: 0 0 8px
+        }
+
+        .sub {
+            color: var(--muted);
+            margin-bottom: 22px
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px
+        }
+
+        @media(min-width:960px) {
+            .grid {
+                grid-template-columns: 1.1fr 1fr
+            }
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid #1e274b;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 6px 24px #00000040
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin: 0 0 10px
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #2a3563;
+            background: #0c1531;
+            color: var(--fg)
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px
+        }
+
+        button {
+            border: 1px solid #2a3563;
+            background: #142253;
+            color: var(--fg);
+            padding: 9px 12px;
+            border-radius: 12px;
+            cursor: pointer
+        }
+
+        button:hover {
+            background: #1a2b6a
+        }
+
+        button.primary {
+            background: #2b54c9;
+            border-color: #2b54c9
+        }
+
+        button.primary:hover {
+            background: #3563ea
+        }
+
+        button.ghost {
+            background: #0c1531
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace
+        }
+
+        .flex {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid #2a3563;
+            background: var(--chip);
+            min-width: 36px
+        }
+
+        .pill.done {
+            background: var(--chip-done)
+        }
+
+        .pill.active {
+            background: var(--chip-active);
+            border-color: var(--brand)
+        }
+
+        .scroller {
+            display: flex;
+            gap: 8px;
+            overflow: auto;
+            padding-bottom: 6px
+        }
+
+        .kpi {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 8px
+        }
+
+        .kpi .card-mini {
+            background: #0c1531;
+            border: 1px solid #2a3563;
+            border-radius: 12px;
+            padding: 10px
+        }
+
+        .card-mini h3 {
+            margin: 0 0 4px;
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .card-mini .v {
+            font-size: 18px
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px
+        }
+
+        .table th,
+        .table td {
+            border-bottom: 1px solid #223064;
+            padding: 8px 6px;
+            text-align: left
+        }
+
+        .table th {
+            color: var(--muted);
+            font-weight: 600
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #203067;
+            border: 1px solid #2a3563;
+            color: #cfe3ff;
+            font-size: 12px
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .callout {
+            border-left: 3px solid var(--brand);
+            padding: 10px 12px;
+            background: #0f1a3b;
+            border-radius: 8px
+        }
+
+        .sequence {
+            white-space: nowrap
+        }
+
+        .foot {
+            margin-top: 22px;
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .center {
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .sep {
+            height: 1px;
+            background: #213064;
+            margin: 12px 0
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <h1>🐦 Polly Nomials — 최소 키입력 시각화</h1>
+        <div class="sub">호너(Horner) 형식으로 <span class="mono">x</span>부터 시작해 <span class="mono">+ a<sub>i</sub></span>와
+            <span class="mono">× x</span>를 번갈아 누르며 값을 구하고, 동시에 최소 키 수를 계산합니다.</div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>입력</h2>
+                <div class="row">
+                    <div style="flex:1 1 140px;min-width:140px">
+                        <label>차수 n (1~100)</label>
+                        <input id="deg" type="number" value="3" min="1" max="100" />
+                    </div>
+                    <div style="flex:2 1 360px;min-width:240px">
+                        <label>계수 a<sub>n</sub> … a<sub>0</sub> (공백 구분, 모닉: a<sub>n</sub>=1)</label>
+                        <input id="coeffs" type="text" value="1 0 1 11" />
+                    </div>
+                    <div style="flex:1 1 160px;min-width:140px">
+                        <label>x 값</label>
+                        <div class="flex">
+                            <label><input type="radio" name="xval" value="1" checked> <span class="mono">x =
+                                    1</span></label>
+                            <label><input type="radio" name="xval" value="-1"> <span class="mono">x = -1</span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button class="primary" id="run">시각화 시작</button>
+                    <button class="ghost" id="sample1">샘플 1 불러오기</button>
+                    <button class="ghost" id="sample2">샘플 2 불러오기</button>
+                    <button class="ghost" id="reset">초기화</button>
+                </div>
+                <div class="hint">형식: <span class="mono">n a<sub>n</sub> a<sub>n-1</sub> … a<sub>0</sub> x∈{±1}</span>.
+                    시각화는 <strong>최소 키</strong> 입력 순서(<span class="mono">x</span> → <span class="mono">+
+                        a<sub>i</sub></span> → <span class="mono">× x</span>)에 맞춰 진행됩니다.</div>
+            </div>
+
+            <div class="card">
+                <h2>요약</h2>
+                <div class="kpi">
+                    <div class="card-mini">
+                        <h3>다항식</h3>
+                        <div class="v mono" id="polyStr">—</div>
+                    </div>
+                    <div class="card-mini">
+                        <h3>값 f(x)</h3>
+                        <div class="v mono" id="polyVal">—</div>
+                    </div>
+                    <div class="card-mini">
+                        <h3>최소 키 수</h3>
+                        <div class="v mono" id="minCost">—</div>
+                    </div>
+                </div>
+                <div class="sep"></div>
+                <div class="callout hint">공식: <span class="mono">2n + Σ<sub>i=0..n-1, a<sub>i</sub>&gt;0</sub>(1 +
+                        digits(a<sub>i</sub>))</span> — 시작 <span class="mono">x</span>, 곱셈 <span
+                        class="mono">(n-1)</span>회, 각 양의 계수마다 <span class="mono">'+'</span>와 자리수.</div>
+            </div>
+        </div>
+
+        <div class="grid" style="margin-top:16px">
+            <div class="card">
+                <h2>키 입력 스트림</h2>
+                <div id="keyStream" class="scroller"></div>
+                <div class="flex" style="margin-top:10px">
+                    <button id="prev">⟵ 이전</button>
+                    <button id="next">다음 ⟶</button>
+                    <button id="auto">▶ 자동 재생</button>
+                    <span class="muted">진행: <span id="progress">0 / 0</span></span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>단계 로그 (값의 변화)</h2>
+                <table class="table" id="stepTable">
+                    <thead>
+                        <tr>
+                            <th>순서</th>
+                            <th>연산</th>
+                            <th class="mono">현재 값</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+            <h2>비용 분해</h2>
+            <table class="table" id="costTable">
+                <thead>
+                    <tr>
+                        <th>구성</th>
+                        <th>설명</th>
+                        <th>비용</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="foot">ⓘ 계산은 임의 정밀도(큰 정수)를 위해 JavaScript <span class="mono">BigInt</span>를 사용합니다. 자리수는 10진 표기 길이입니다.
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const $ = sel => document.querySelector(sel);
+            const $$ = sel => Array.from(document.querySelectorAll(sel));
+            const degEl = $('#deg');
+            const coeffsEl = $('#coeffs');
+            const keyStreamEl = $('#keyStream');
+            const polyStrEl = $('#polyStr');
+            const polyValEl = $('#polyVal');
+            const minCostEl = $('#minCost');
+            const stepTableBody = $('#stepTable tbody');
+            const costTableBody = $('#costTable tbody');
+            const progressEl = $('#progress');
+
+            const btnRun = $('#run');
+            const btnPrev = $('#prev');
+            const btnNext = $('#next');
+            const btnAuto = $('#auto');
+            const btnSample1 = $('#sample1');
+            const btnSample2 = $('#sample2');
+            const btnReset = $('#reset');
+
+            let state = null; // will hold built visualization data
+            let autoTimer = null;
+
+            function parseInput() {
+                const n = Number(degEl.value.trim());
+                if (!Number.isInteger(n) || n < 1 || n > 100) throw new Error('차수 n은 1~100 정수여야 합니다.');
+                const coeffStrs = coeffsEl.value.trim().split(/\s+/).filter(Boolean);
+                if (coeffStrs.length !== n + 1) throw new Error(`계수 개수가 맞지 않습니다. (기대: ${n + 1}개, 현재: ${coeffStrs.length}개)`);
+                const a = coeffStrs.map(s => toBigIntStrict(s));
+                if (a[0] !== 1n) throw new Error('모닉 조건 위반: a_n = 1 이어야 합니다. (맨 앞 숫자)');
+                const x = BigInt(document.querySelector('input[name="xval"]:checked').value);
+                if (x !== 1n && x !== -1n) throw new Error('x는 1 또는 -1 이어야 합니다.');
+
+                // a 배열을 a_n..a_0 에서 a[n]..a[0] 형태로 변환
+                const arr = Array(n + 1);
+                for (let i = 0; i <= n; i++) { arr[n - i] = a[i]; }
+                return { n, a: arr, x };
+            }
+
+            function toBigIntStrict(s) {
+                if (!/^\d+$/.test(s)) throw new Error('계수는 0 이상의 정수만 허용됩니다.');
+                return BigInt(s);
+            }
+
+            function digits10(bi) { return bi.toString(10).length; }
+
+            function buildPolyString(n, a) {
+                // 반환: 텍스트 "x^n + a_{n-1}x^{n-1} + ... + a0" (0도 표시, 가독성용)
+                const parts = [];
+                parts.push(n === 1 ? 'x' : `x^${n}`);
+                for (let i = n - 1; i >= 1; i--) {
+                    parts.push(` + ${a[i]}x${i === 1 ? '' : '^' + i}`);
+                }
+                parts.push(` + ${a[0]}`);
+                return parts.join('');
+            }
+
+            function evalValueAndBuildSteps(n, a, x) {
+                // 최소 키 입력 순서에 맞춘 단계: start x; for i=n-1..0: [+a_i?], [*x if i>0]
+                const steps = []; // {label, val} ; label is description
+                let cur = x; // 시작: 화면에 x
+                steps.push({ label: "시작: x", val: cur });
+
+                for (let i = n - 1; i >= 0; i--) {
+                    if (a[i] > 0n) {
+                        const before = cur;
+                        cur = cur + a[i];
+                        steps.push({ label: `+ a_${i} (${a[i].toString()})`, val: cur, i, kind: 'add' });
+                    }
+                    if (i > 0) {
+                        const before = cur;
+                        cur = cur * x;
+                        steps.push({ label: `× x (x=${x > 0n ? '+1' : '-1'})`, val: cur, i, kind: 'mul' });
+                    }
+                }
+                // 최종값 cur
+                return { value: cur, steps };
+            }
+
+            function buildKeyTokens(n, a) {
+                // 토큰 배열: {t:"x"|"+"|"digit"|"×"|"=", v?:string}
+                const tokens = [];
+                tokens.push({ t: 'x', v: 'x' });
+                for (let i = n - 1; i >= 0; i--) {
+                    if (a[i] > 0n) {
+                        tokens.push({ t: '+', v: '+' });
+                        const s = a[i].toString();
+                        for (const ch of s) tokens.push({ t: 'digit', v: ch });
+                    }
+                    if (i > 0) { tokens.push({ t: '×', v: '×' }); tokens.push({ t: 'x', v: 'x' }); }
+                }
+                tokens.push({ t: '=', v: '=' });
+                return tokens;
+            }
+
+            function buildCostBreakdown(n, a) {
+                const rows = [];
+                rows.push({ name: '기본', desc: `시작 x + 곱셈 ${n - 1}회 + '='`, cost: 2 * n });
+                let extra = 0;
+                for (let i = n - 1; i >= 0; i--) {
+                    if (a[i] > 0n) {
+                        const d = digits10(a[i]);
+                        rows.push({ name: `a_${i}>0`, desc: `+ (1) + digits(${a[i]}) (${d})`, cost: 1 + d });
+                        extra += 1 + d;
+                    }
+                }
+                return { rows, total: 2 * n + extra };
+            }
+
+            function renderAll() {
+                if (!state) { return; }
+                // summary
+                polyStrEl.textContent = state.polyStr;
+                polyValEl.textContent = state.value.toString();
+                minCostEl.textContent = state.tokens.length.toString();
+
+                // key tokens
+                keyStreamEl.innerHTML = '';
+                state.tokens.forEach((tok, idx) => {
+                    const el = document.createElement('div');
+                    el.className = 'pill mono';
+                    el.textContent = tok.v;
+                    el.dataset.idx = idx;
+                    keyStreamEl.appendChild(el);
+                });
+                updateTokenHighlight();
+
+                // step table
+                stepTableBody.innerHTML = '';
+                state.actionSteps.forEach((st, i) => {
+                    const tr = document.createElement('tr');
+                    const td0 = document.createElement('td'); td0.textContent = (i + 1).toString();
+                    const td1 = document.createElement('td'); td1.textContent = st.label;
+                    const td2 = document.createElement('td'); td2.textContent = st.val.toString(); td2.className = 'mono';
+                    tr.appendChild(td0); tr.appendChild(td1); tr.appendChild(td2);
+                    stepTableBody.appendChild(tr);
+                });
+
+                // cost table
+                costTableBody.innerHTML = '';
+                state.cost.rows.forEach(r => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td><span class="badge">${r.name}</span></td><td>${r.desc}</td><td class="mono">${r.cost}</td>`;
+                    costTableBody.appendChild(tr);
+                });
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td><strong>합계</strong></td><td class="muted">최소 키 수</td><td class="mono"><strong>${state.cost.total}</strong></td>`;
+                costTableBody.appendChild(tr);
+
+                // progress
+                updateProgress();
+            }
+
+            function updateTokenHighlight() {
+                const pills = $$('#keyStream .pill');
+                pills.forEach((el, i) => {
+                    el.classList.toggle('done', i < state.cursor);
+                    el.classList.toggle('active', i === state.cursor);
+                });
+                // autoscroll
+                const active = $('#keyStream .pill.active');
+                if (active) { active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }
+            }
+
+            function updateProgress() {
+                progressEl.textContent = `${Math.min(state.cursor + 1, state.tokens.length)} / ${state.tokens.length}`;
+            }
+
+            function step(delta) {
+                if (!state) return;
+                const next = Math.max(0, Math.min(state.cursor + delta, state.tokens.length - 1));
+                state.cursor = next;
+                updateTokenHighlight();
+                updateProgress();
+            }
+
+            function autoplay() {
+                if (!state) return;
+                if (autoTimer) { clearInterval(autoTimer); autoTimer = null; btnAuto.textContent = '▶ 자동 재생'; return; }
+                btnAuto.textContent = '⏸ 일시정지';
+                autoTimer = setInterval(() => {
+                    if (state.cursor >= state.tokens.length - 1) { clearInterval(autoTimer); autoTimer = null; btnAuto.textContent = '▶ 자동 재생'; return; }
+                    step(1);
+                }, 600);
+            }
+
+            function build() {
+                const { n, a, x } = parseInput();
+
+                // build tokens & cost
+                const tokens = buildKeyTokens(n, a);
+                const cost = buildCostBreakdown(n, a);
+
+                // evaluate along the same order as tokens
+                const { value, steps } = evalValueAndBuildSteps(n, a, x);
+
+                // build poly string for UX (explicit 0 포함)
+                const polyStr = buildPolyString(n, a);
+
+                state = {
+                    n, a, x,
+                    tokens,
+                    cost,
+                    value,
+                    polyStr,
+                    actionSteps: steps,
+                    cursor: 0
+                };
+            }
+
+            function run() {
+                try {
+                    build();
+                    renderAll();
+                } catch (err) {
+                    alert(err.message || String(err));
+                }
+            }
+
+            // events
+            btnRun.addEventListener('click', run);
+            btnPrev.addEventListener('click', () => step(-1));
+            btnNext.addEventListener('click', () => step(1));
+            btnAuto.addEventListener('click', autoplay);
+            btnReset.addEventListener('click', () => { state = null; keyStreamEl.innerHTML = ''; stepTableBody.innerHTML = ''; costTableBody.innerHTML = ''; polyStrEl.textContent = '—'; polyValEl.textContent = '—'; minCostEl.textContent = '—'; progressEl.textContent = '0 / 0'; if (autoTimer) { clearInterval(autoTimer); autoTimer = null; btnAuto.textContent = '▶ 자동 재생'; } });
+            btnSample1.addEventListener('click', () => { degEl.value = 3; coeffsEl.value = '1 0 1 11'; $$('input[name="xval"]').forEach(r => r.checked = (r.value === '1')); run(); });
+            btnSample2.addEventListener('click', () => { degEl.value = 3; coeffsEl.value = '1 0 2 11'; $$('input[name="xval"]').forEach(r => r.checked = (r.value === '-1')); run(); });
+
+            // 초기 렌더: 샘플 1로
+            btnSample1.click();
+        })();
+    </script>
+</body>
+
+</html>
