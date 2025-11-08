@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slots of Fun — 정삼각형 판별 알고리즘 시각화</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            /* slate-900 */
+            --panel: #111827;
+            /* gray-900 */
+            --muted: #94a3b8;
+            /* slate-400 */
+            --text: #e5e7eb;
+            /* gray-200 */
+            --accent: #38bdf8;
+            /* sky-400 */
+            --good: #f59e0b;
+            /* amber-500 */
+            --bad: #ef4444;
+            /* red-500 */
+            --ok: #22c55e;
+            /* green-500 */
+            --node: #1f2937;
+            /* gray-800 */
+            --ring: #334155;
+            /* slate-700 */
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        }
+
+        h1 {
+            font-size: 20px;
+            margin: 0 0 8px;
+        }
+
+        .app {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 16px;
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .stack {
+            display: grid;
+            gap: 10px;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        label {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        textarea,
+        select,
+        input[type="text"] {
+            width: 100%;
+            background: #0b1220;
+            color: var(--text);
+            border: 1px solid #1f2235;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+        button {
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button.ghost {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid #25314a;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .kbd {
+            font: 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background: #0b1220;
+            border: 1px solid #1f2235;
+            padding: 2px 6px;
+            border-radius: 6px;
+            color: var(--muted);
+        }
+
+        /* 보드 */
+        .stage-wrap {
+            position: relative;
+            background: #0b1020;
+            border: 1px solid #1b2640;
+            border-radius: 14px;
+            padding: 12px;
+        }
+
+        .stage {
+            position: relative;
+            width: 100%;
+            min-height: 420px;
+        }
+
+        .board {
+            position: relative;
+            margin: 0 auto;
+        }
+
+        .node {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border-radius: 9999px;
+            background: var(--node);
+            border: 2px solid var(--ring);
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+        }
+
+        .node .coord {
+            position: absolute;
+            top: 48px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .node.A {
+            border-color: var(--bad);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+        }
+
+        .node.B {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+        }
+
+        .node.C {
+            border-color: var(--ok);
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+        }
+
+        .node.win {
+            background: #1b2930;
+            border-color: var(--good);
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25), inset 0 0 0 2px rgba(245, 158, 11, 0.35);
+        }
+
+        /* SVG 오버레이 */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .overlay line,
+        .overlay polygon {
+            stroke-width: 3px;
+            fill: none;
+        }
+
+        .info {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .card {
+            background: #0b1220;
+            border: 1px solid #1f2235;
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .title {
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--muted);
+            letter-spacing: 0.02em;
+        }
+
+        .big {
+            font-size: 22px;
+            font-weight: 900;
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-weight: 700;
+        }
+
+        .winset {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            background: #1b2930;
+            border: 1px solid #274054;
+            color: #c8f0ff;
+            font-weight: 800;
+        }
+
+        .controls {
+            display: grid;
+            gap: 8px;
+            grid-template-columns: 1fr auto auto auto auto;
+            align-items: center;
+        }
+
+        .range-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="range"] {
+            width: 160px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 9999px;
+            display: inline-block;
+            border: 2px solid transparent;
+        }
+
+        .dot.A {
+            border-color: var(--bad);
+        }
+
+        .dot.B {
+            border-color: var(--accent);
+        }
+
+        .dot.C {
+            border-color: var(--ok);
+        }
+
+        .dot.W {
+            background: var(--good);
+        }
+
+        .help {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .sep {
+            height: 1px;
+            background: #1f2235;
+            margin: 8px 0;
+        }
+
+        @media (max-width: 980px) {
+            .app {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <!-- 왼쪽: 입력/설정 -->
+        <section class="panel stack">
+            <h1>Slots of Fun — 실행 단계 시각화</h1>
+            <div class="help">
+                • 입력은 문제 포맷(<span class="mono">n</span>과 길이 <span class="mono">n(n+1)/2</span>의 문자열)을 따릅니다.<br>
+                • 하단 컨트롤로 <b>한 단계씩</b> 혹은 <b>자동 재생</b>을 할 수 있습니다.<br>
+                • <b>벡터 방식</b>: 꼭짓점 A에서 일반 격자 벡터 <span class="mono">v=(a,b)</span>와 그 60° 회전 <span
+                    class="mono">R(v)=(-b,a+b)</span>을 더한 B,C를 검사합니다. 세 글자가 같으면 정답에 누적됩니다.
+            </div>
+            <div class="stack">
+                <label for="input">입력 (여러 인스턴스 가능, 0으로 종료)</label>
+                <textarea id="input" rows="12">4
+abccddadca
+6
+azdefccrhijrrmznzocpq
+2
+abc
+0</textarea>
+            </div>
+            <div class="row">
+                <button id="parse">입력 파싱</button>
+                <select id="instance"></select>
+                <button class="ghost" id="reload">이 인스턴스 다시 로드</button>
+            </div>
+            <div class="legend">
+                <span class="dot A"></span> A(기저 꼭짓점)
+                <span class="dot B"></span> B
+                <span class="dot C"></span> C
+                <span class="dot W"></span> 삼각형 성공
+            </div>
+            <div class="sep"></div>
+            <div class="stack">
+                <div class="controls">
+                    <div class="range-wrap">
+                        <label>속도</label>
+                        <input type="range" id="speed" min="0" max="100" value="60" />
+                    </div>
+                    <button id="prev">◀︎ 이전</button>
+                    <button id="play">▶︎ 재생</button>
+                    <button id="pause" disabled>⏸ 일시정지</button>
+                    <button id="next">다음 ▶︎</button>
+                </div>
+                <div class="row">
+                    <label class="mono">현재 단계: <span id="stepIdx">0</span> / <span id="stepTotal">0</span></label>
+                </div>
+            </div>
+        </section>
+
+        <!-- 오른쪽: 보드/정보 -->
+        <section class="stack">
+            <div class="stage-wrap">
+                <div class="stage">
+                    <div id="board" class="board"></div>
+                    <svg id="overlay" class="overlay"></svg>
+                </div>
+            </div>
+            <div class="info">
+                <div class="card">
+                    <div class="title">현재 검사 상태</div>
+                    <div class="mono">A(x,y) = <span id="axy">-</span> / r,c = <span id="arc">-</span></div>
+                    <div class="mono">B(x,y) = <span id="bxy">-</span> / r,c = <span id="brc">-</span></div>
+                    <div class="mono">C(x,y) = <span id="cxy">-</span> / r,c = <span id="crc">-</span></div>
+                    <div class="mono">v = <span id="vraw">-</span> / R(v) = <span id="vrot">-</span></div>
+                    <div class="mono">‖v‖² = <span id="vlen">-</span></div>
+                    <div class="mono">문자 = <span id="lettersNow">-</span></div>
+                    <div class="mono">결과 = <span id="resultNow">-</span></div>
+                </div>
+                <div class="card">
+                    <div class="title">정답(letter) 누적</div>
+                    <div id="winners" class="winset"></div>
+                </div>
+            </div>
+            <div class="panel help">
+                <b>좌표계</b>: (x,y) = (c, r−c). 유효영역: x≥0, y≥0, x+y≤n−1. 행/열은 r=x+y, c=x.<br>
+                <b>벡터 방식</b>: 임의의 격자 벡터 <span class="mono">v=(a,b)</span>와 60° 회전 <span class="mono">R(v)=(-b,
+                    a+b)</span>를 사용합니다. 정삼각형은 A, B=A+v, C=A+R(v)로 전수됩니다. 길이 제곱은 <span class="mono">‖v‖²=a²+ab+b²</span>.
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // ---------- 유틸 ----------
+        function rot60(a, b) { return [-b, a + b]; }
+        function axialToRC(x, y) { return [x + y, x]; }            // r = x+y, c = x
+        function inBounds(n, x, y) { return x >= 0 && y >= 0 && (x + y <= n - 1); }
+
+        // 화면 좌표 배치: r행에 r+1개를 가로로, 삼각형 형태로 가운데 정렬
+        function layout(n, radius = 22, hgap = 56, vgap = 56) {
+            const width = (n - 1) * hgap + 44 + 12; // 여유 약간
+            const height = (n - 1) * vgap + 44 + 12;
+            const pos = {}; // key: `${r}-${c}` -> {x,y}
+            for (let r = 0; r < n; r++) {
+                const count = r + 1;
+                const leftPad = (n - 1 - r) * (hgap / 2) + 6; // 가운데 정렬
+                for (let c = 0; c < count; c++) {
+                    const x = leftPad + c * hgap;
+                    const y = 6 + r * vgap;
+                    pos[`${r}-${c}`] = { x, y };
+                }
+            }
+            return { width, height, pos };
+        }
+
+        // 입력 파서: 여러 인스턴스를 [{n, letters}]로 반환
+        function parseInstances(text) {
+            const toks = text.trim().split(/\s+/);
+            let i = 0; const inst = [];
+            while (i < toks.length) {
+                const n = Number(toks[i++]);
+                if (!Number.isFinite(n)) break;
+                if (n === 0) break;
+                const letters = (toks[i++] || "").trim();
+                const need = n * (n + 1) / 2;
+                if (letters.length !== need) {
+                    throw new Error(`n=${n}에 필요한 글자 수 ${need}와 입력 길이 ${letters.length}가 다릅니다.`);
+                }
+                inst.push({ n, letters });
+            }
+            return inst;
+        }
+
+        // grid[r][c] 구성
+        function buildGrid(n, letters) {
+            const grid = []; let p = 0;
+            for (let r = 0; r < n; r++) {
+                const row = [];
+                for (let c = 0; c <= r; c++) row.push(letters[p++]);
+                grid.push(row);
+            }
+            return grid;
+        }
+
+        // 단계 생성: 알고리즘의 모든 검사 순간을 step으로 수집
+        function buildSteps(n, grid) {
+            const steps = [];
+            const winners = new Set();
+            const N = n;
+            // 가능한 모든 비영(0,0) 벡터 v=(a,b)
+            const vecs = [];
+            for (let a = -N; a <= N; a++) {
+                for (let b = -N; b <= N; b++) {
+                    if (a === 0 && b === 0) continue;
+                    vecs.push([a, b]);
+                }
+            }
+            for (let x = 0; x < n; x++) {
+                const maxY = n - 1 - x;
+                for (let y = 0; y <= maxY; y++) {
+                    const a0 = grid[x + y][x];
+                    for (const [a, b] of vecs) {
+                        const bx = x + a, by = y + b;
+                        const [ra, rb] = rot60(a, b); // 60° 회전
+                        const cx = x + ra, cy = y + rb;
+                        if (inBounds(n, bx, by) && inBounds(n, cx, cy)) {
+                            const b0 = grid[bx + by][bx];
+                            const c0 = grid[cx + cy][cx];
+                            const ok = (a0 === b0 && b0 === c0);
+                            if (ok) winners.add(a0);
+                            steps.push({ x, y, bx, by, cx, cy, a0, b0, c0, ok, a, b, ra, rb, winnersSnap: new Set(winners) });
+                        } else {
+                            // 시각화 일관성을 위해 범위 밖도 단계 기록
+                            steps.push({ x, y, bx, by, cx, cy, a0, b0: '?', c0: '?', ok: false, a, b, ra, rb, winnersSnap: new Set(winners) });
+                        }
+                    }
+                }
+            }
+            return steps;
+        }
+
+        // ---------- 렌더링 ----------
+        const board = document.getElementById('board');
+        const overlay = document.getElementById('overlay');
+        const stepIdxEl = document.getElementById('stepIdx');
+        const stepTotalEl = document.getElementById('stepTotal');
+        const axy = document.getElementById('axy');
+        const bxy = document.getElementById('bxy');
+        const cxy = document.getElementById('cxy');
+        const arc = document.getElementById('arc');
+        const brc = document.getElementById('brc');
+        const crc = document.getElementById('crc');
+        const vrawEl = document.getElementById('vraw');
+        const vrotEl = document.getElementById('vrot');
+        const vlenEl = document.getElementById('vlen');
+        const lettersNow = document.getElementById('lettersNow');
+        const resultNow = document.getElementById('resultNow');
+        const winnersBox = document.getElementById('winners');
+
+        let state = {
+            inst: [], current: 0, n: 0, grid: [], layout: null,
+            steps: [], idx: 0, timer: null, speed: 60
+        };
+
+        function renderBoard(n, grid, lay) {
+            board.innerHTML = '';
+            board.style.width = lay.width + 'px';
+            board.style.height = lay.height + 'px';
+            overlay.setAttribute('width', lay.width);
+            overlay.setAttribute('height', lay.height);
+            overlay.innerHTML = '';
+
+            for (let r = 0; r < n; r++) {
+                for (let c = 0; c <= r; c++) {
+                    const id = `${r}-${c}`;
+                    const div = document.createElement('div');
+                    div.className = 'node';
+                    div.dataset.r = r; div.dataset.c = c;
+                    div.style.left = lay.pos[id].x + 'px';
+                    div.style.top = lay.pos[id].y + 'px';
+                    div.textContent = grid[r][c];
+                    const coord = document.createElement('div');
+                    coord.className = 'coord';
+                    const x = c, y = r - c; // axial
+                    coord.textContent = `(x=${x}, y=${y})`;
+                    div.appendChild(coord);
+                    board.appendChild(div);
+                }
+            }
+        }
+
+        function centerOf(el) {
+            const rect = el.getBoundingClientRect();
+            const parent = board.getBoundingClientRect();
+            return {
+                x: rect.left - parent.left + rect.width / 2,
+                y: rect.top - parent.top + rect.height / 2,
+            };
+        }
+
+        function drawLine(p, q, color) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', p.x); line.setAttribute('y1', p.y);
+            line.setAttribute('x2', q.x); line.setAttribute('y2', q.y);
+            line.setAttribute('stroke', color);
+            overlay.appendChild(line);
+        }
+
+        function drawTriangle(a, b, c, color) {
+            const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            poly.setAttribute('points', `${a.x},${a.y} ${b.x},${b.y} ${c.x},${c.y}`);
+            poly.setAttribute('stroke', color);
+            poly.setAttribute('fill', 'rgba(245,158,11,0.08)');
+            overlay.appendChild(poly);
+        }
+
+        function highlightStep(step) {
+            // 1) 기존 클래스 제거
+            Array.from(board.children).forEach(el => el.classList.remove('A', 'B', 'C', 'win'));
+            overlay.innerHTML = '';
+
+            const { x, y, bx, by, cx, cy, a0, b0, c0, ok, a, b, ra, rb } = step;
+            const [ar, ac] = axialToRC(x, y);
+            const [br, bc] = axialToRC(bx, by);
+            const [cr, cc] = axialToRC(cx, cy);
+
+            // 2) 보드상의 요소 찾기
+            const aEl = board.querySelector(`.node[data-r="${ar}"][data-c="${ac}"]`);
+            if (aEl) aEl.classList.add('A');
+            let bEl = null, cEl = null;
+            if (inBounds(state.n, bx, by)) {
+                bEl = board.querySelector(`.node[data-r="${br}"][data-c="${bc}"]`);
+                if (bEl) bEl.classList.add('B');
+            }
+            if (inBounds(state.n, cx, cy)) {
+                cEl = board.querySelector(`.node[data-r="${cr}"][data-c="${cc}"]`);
+                if (cEl) cEl.classList.add('C');
+            }
+
+            // 3) SVG로 선/삼각형 그리기
+            if (aEl && bEl) drawLine(centerOf(aEl), centerOf(bEl), '#38bdf8');
+            if (aEl && cEl) drawLine(centerOf(aEl), centerOf(cEl), '#22c55e');
+            if (ok && aEl && bEl && cEl) {
+                aEl.classList.add('win'); bEl.classList.add('win'); cEl.classList.add('win');
+                drawTriangle(centerOf(aEl), centerOf(bEl), centerOf(cEl), '#f59e0b');
+            }
+
+            // 4) 정보판 업데이트
+            axy.textContent = `(${x}, ${y})`;
+            bxy.textContent = inBounds(state.n, bx, by) ? `(${bx}, ${by})` : '—';
+            cxy.textContent = inBounds(state.n, cx, cy) ? `(${cx}, ${cy})` : '—';
+            arc.textContent = `(${ar}, ${ac})`;
+            brc.textContent = inBounds(state.n, bx, by) ? `(${br}, ${bc})` : '—';
+            crc.textContent = inBounds(state.n, cx, cy) ? `(${cr}, ${cc})` : '—';
+            vrawEl.textContent = `(${a}, ${b})`;
+            vrotEl.textContent = `(${ra}, ${rb})`;
+            const len2 = a * a + b * b + a * b; // |a u + b v|^2
+            vlenEl.textContent = String(len2);
+            lettersNow.textContent = `${a0}${inBounds(state.n, bx, by) ? b0 : '?'}${inBounds(state.n, cx, cy) ? c0 : '?'}`;
+            resultNow.textContent = ok ? '성공(세 글자 동일)' : '실패';
+
+            stepIdxEl.textContent = state.idx + 1; // 1-based
+            stepTotalEl.textContent = state.steps.length;
+        }
+
+        // ---------- 컨트롤 ----------
+        const parseBtn = document.getElementById('parse');
+        const instSel = document.getElementById('instance');
+        const reloadBtn = document.getElementById('reload');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+        const playBtn = document.getElementById('play');
+        const pauseBtn = document.getElementById('pause');
+        const speedInp = document.getElementById('speed');
+
+        parseBtn.addEventListener('click', () => {
+            try {
+                state.inst = parseInstances(document.getElementById('input').value);
+                if (state.inst.length === 0) { alert('유효한 인스턴스가 없습니다.'); return; }
+                instSel.innerHTML = '';
+                state.inst.forEach((it, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = String(idx);
+                    opt.textContent = `#${idx + 1} — n=${it.n}, |letters|=${it.letters.length}`;
+                    instSel.appendChild(opt);
+                });
+                instSel.value = '0';
+                loadInstance(0);
+            } catch (e) {
+                alert(e.message || String(e));
+            }
+        });
+
+        instSel.addEventListener('change', (e) => {
+            loadInstance(Number(e.target.value));
+        });
+
+        reloadBtn.addEventListener('click', () => loadInstance(Number(instSel.value)));
+
+        prevBtn.addEventListener('click', () => stepTo(state.idx - 1));
+        nextBtn.addEventListener('click', () => stepTo(state.idx + 1));
+        playBtn.addEventListener('click', play);
+        pauseBtn.addEventListener('click', pause);
+
+        speedInp.addEventListener('input', () => {
+            state.speed = Number(speedInp.value); // 0..100 (0이 가장 빠름)
+            if (state.timer) { pause(); play(); }
+        });
+
+        function loadInstance(index) {
+            pause();
+            state.current = index;
+            const { n, letters } = state.inst[index];
+            state.n = n;
+            state.grid = buildGrid(n, letters);
+            state.layout = layout(n);
+            renderBoard(n, state.grid, state.layout);
+            state.steps = buildSteps(n, state.grid);
+            state.idx = 0;
+            stepTotalEl.textContent = state.steps.length;
+            if (state.steps.length > 0) highlightStep(state.steps[state.idx]);
+        }
+
+        function stepTo(idx) {
+            if (!state.steps.length) return;
+            state.idx = (idx + state.steps.length) % state.steps.length;
+            highlightStep(state.steps[state.idx]);
+        }
+
+        function play() {
+            if (!state.steps.length || state.timer) return;
+            playBtn.disabled = true; pauseBtn.disabled = false;
+            const tick = () => {
+                stepTo(state.idx + 1);
+                const delay = 120 + (100 - state.speed) * 10; // 속도 변환: 120ms ~ 1,120ms
+                state.timer = setTimeout(tick, delay);
+            };
+            const delay = 120 + (100 - state.speed) * 10;
+            state.timer = setTimeout(tick, delay);
+        }
+
+        function pause() {
+            playBtn.disabled = false; pauseBtn.disabled = true;
+            if (state.timer) { clearTimeout(state.timer); state.timer = null; }
+        }
+
+        // 초기 자동 파싱(예제 세팅)
+        window.addEventListener('DOMContentLoaded', () => {
+            parseBtn.click();
+        });
+    </script>
+</body>
+
+</html>
