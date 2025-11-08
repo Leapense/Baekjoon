@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mall Mania: 최단 보행 거리 BFS 시각화</title>
+    <style>
+        :root {
+            --bg: #0b1020;
+            --panel: #0f1630;
+            --ink: #e6ecff;
+            --muted: #92a0c6;
+            --accent: #8cf;
+            --accent2: #f6a;
+            --ok: #8f8;
+            --warn: #fd6;
+            --danger: #f88;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 10px;
+            background: var(--bg);
+            color: var(--ink);
+            font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        }
+
+        header {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(180deg, #121938, #0e152f);
+            border-bottom: 1px solid #1c2758;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 12px;
+            padding: 0 12px 12px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid #1b2552;
+            border-radius: 14px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .left {
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            overflow: hidden;
+        }
+
+        .section {
+            padding: 12px 14px;
+            border-bottom: 1px dashed #21306b;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 140px;
+            resize: vertical;
+            border-radius: 10px;
+            border: 1px solid #29356e;
+            background: #0b122b;
+            color: var(--ink);
+            padding: 10px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        .btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        button,
+        .pill {
+            background: #101a3e;
+            color: var(--ink);
+            border: 1px solid #2a3a79;
+            border-radius: 999px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform .05s ease, background .2s ease, box-shadow .2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .2), inset 0 1px 0 rgba(255, 255, 255, .03);
+        }
+
+        button:hover {
+            background: #132053;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button[disabled] {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .kv {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 8px;
+            font-feature-settings: "tnum" 1;
+        }
+
+        .kv .muted {
+            color: var(--muted);
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        input[type="number"],
+        input[type="range"] {
+            width: 130px;
+        }
+
+        input[type="checkbox"] {
+            transform: translateY(1px);
+        }
+
+        .legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .dotA {
+            background: #6cf;
+            border: 1px solid #9de;
+        }
+
+        .dotB {
+            background: #f96;
+            border: 1px solid #fc9;
+        }
+
+        .dotFront {
+            background: #9f9;
+            border: 1px solid #cfc;
+        }
+
+        .dotVisited {
+            background: #445a3b;
+            border: 1px solid #5f7a55;
+        }
+
+        .dotPath {
+            background: #ffdd55;
+            border: 1px solid #ffe58a;
+        }
+
+        .viz {
+            position: relative;
+            padding: 12px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            background: #0a0f22;
+            border: 1px solid #1b2552;
+        }
+
+        .hud {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background: rgba(7, 10, 25, 0.78);
+            border: 1px solid #1e2a5e;
+            border-radius: 10px;
+            padding: 10px 12px;
+            backdrop-filter: blur(4px);
+        }
+
+        .hud h3 {
+            margin: 0 0 6px;
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 700;
+            letter-spacing: .2px;
+        }
+
+        .hud table {
+            border-collapse: collapse;
+        }
+
+        .hud td {
+            padding: 2px 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+
+        .hud td:first-child {
+            color: var(--muted);
+        }
+
+        footer {
+            padding: 10px 14px;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .subtle {
+            color: var(--muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>🧭 Mall Mania — 경계↔경계 최단 보행 거리 (BFS) 시각화</h1>
+        <span class="subtle">다원발 BFS로 두 몰의 경계점 사이 맨해튼 최소 거리를 탐색합니다.</span>
+    </header>
+
+    <main>
+        <section class="panel left">
+            <div class="section">
+                <div class="controls">
+                    <div class="row">
+                        <div class="legend">
+                            <span class="pill">범례</span>
+                            <span><span class="dot dotA"></span> 몰 A 경계</span>
+                            <span><span class="dot dotB"></span> 몰 B 경계</span>
+                            <span><span class="dot dotFront"></span> 최신 프론티어</span>
+                            <span><span class="dot dotVisited"></span> 누적 방문</span>
+                            <span><span class="dot dotPath"></span> 한 경로</span>
+                        </div>
+                    </div>
+                    <textarea id="input" spellcheck="false"
+                        placeholder="여기에 입력을 붙여넣으세요. 예:&#10;4&#10;0 0 0 1 1 1 1 0&#10;6&#10;4 3 4 2 3 2&#10;2 2 2 3&#10;3 3&#10;0"></textarea>
+                    <div class="btns">
+                        <button id="btnSample">샘플 입력 채우기</button>
+                        <button id="btnInit">파싱 & 초기화</button>
+                        <button id="btnStep">한 단계</button>
+                        <button id="btnRun">자동 재생 ▶</button>
+                        <button id="btnPause" disabled>일시정지 ⏸</button>
+                        <button id="btnReset">리셋</button>
+                    </div>
+                    <div class="row">
+                        <label>틱당 확장 노드: <input type="range" id="rngBatch" min="100" max="20000" step="100"
+                                value="2000"> <span id="lblBatch">2000</span></label>
+                    </div>
+                    <div class="row">
+                        <label><input type="checkbox" id="chkAutoZoom" checked> 자동 줌</label>
+                        <label><input type="checkbox" id="chkGrid"> 격자선</label>
+                        <label><input type="checkbox" id="chkAccumulate"> 방문 누적 표시</label>
+                        <label><input type="checkbox" id="chkShowPath" checked> 경로 표시</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="kv">
+                    <div class="muted">해결 전략</div>
+                    <div>몰 A의 모든 경계점을 시작점으로, 4방향 격자에서 다원발 BFS를 수행하여 몰 B 경계에 최초로 닿는 레벨이 정답입니다. 내부에서 출발하는 최단 경로는 반드시 어떤
+                        경계점을 거치므로 경계↔경계만 보면 충분합니다.</div>
+                    <div class="muted">좌표 범위</div>
+                    <div>0..2000 (가로: Avenue x, 세로: Street y)</div>
+                    <div class="muted">복잡도</div>
+                    <div>시간 O(방문 격자수), 공간 ≈ 2×2001² 바이트 + (선택) 경로 추적</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="kv">
+                    <div class="muted">입력 형식</div>
+                    <div>p₁, p₁쌍의 (a,s), p₂, p₂쌍의 (a,s). 여기서는 한 테스트케이스만 시각화합니다.</div>
+                    <div class="muted">팁</div>
+                    <div>자동 재생은 매 틱마다 정해진 개수의 노드를 확장합니다. 큰 좌표에서는 누적 표시를 끄고 프론티어만 보세요.</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel viz" id="vizPanel">
+            <canvas id="cv" width="1100" height="800"></canvas>
+            <div class="hud">
+                <h3>상태</h3>
+                <table>
+                    <tr>
+                        <td>거리 d</td>
+                        <td id="statDist">-</td>
+                    </tr>
+                    <tr>
+                        <td>프론티어</td>
+                        <td id="statFrontier">-</td>
+                    </tr>
+                    <tr>
+                        <td>방문 수</td>
+                        <td id="statVisited">-</td>
+                    </tr>
+                    <tr>
+                        <td>큐 길이</td>
+                        <td id="statQLen">-</td>
+                    </tr>
+                    <tr>
+                        <td>진행</td>
+                        <td id="statPhase">대기</td>
+                    </tr>
+                    <tr>
+                        <td>뷰포트</td>
+                        <td id="statView">-</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="subtle">© Mall Mania Visualizer • BFS wavefront, multi-source • Made with vanilla HTML/CSS/JS</div>
+        <div class="subtle">테스트 해보고 싶다면 샘플 입력 → 파싱 & 초기화 → 자동 재생 순서로 눌러보세요.</div>
+    </footer>
+
+    <script>
+        (() => {
+            const W = 2001, H = 2001; // 좌표 범위 0..2000
+            const cv = document.getElementById('cv');
+            const ctx = cv.getContext('2d');
+            const ui = {
+                input: document.getElementById('input'),
+                btnSample: document.getElementById('btnSample'),
+                btnInit: document.getElementById('btnInit'),
+                btnStep: document.getElementById('btnStep'),
+                btnRun: document.getElementById('btnRun'),
+                btnPause: document.getElementById('btnPause'),
+                btnReset: document.getElementById('btnReset'),
+                rngBatch: document.getElementById('rngBatch'),
+                lblBatch: document.getElementById('lblBatch'),
+                chkAutoZoom: document.getElementById('chkAutoZoom'),
+                chkGrid: document.getElementById('chkGrid'),
+                chkAccumulate: document.getElementById('chkAccumulate'),
+                chkShowPath: document.getElementById('chkShowPath'),
+                stat: {
+                    dist: document.getElementById('statDist'),
+                    frontier: document.getElementById('statFrontier'),
+                    visited: document.getElementById('statVisited'),
+                    qlen: document.getElementById('statQLen'),
+                    phase: document.getElementById('statPhase'),
+                    view: document.getElementById('statView'),
+                }
+            };
+
+            const colors = {
+                bg: '#0a0f22',
+                grid: '#162145',
+                A: '#6cf',
+                B: '#f96',
+                frontier: '#9f9',
+                visited: 'rgba(120,160,120,0.35)',
+                path: '#ffdd55',
+            };
+
+            let state = null; // 재시작 가능
+            let animId = null;
+
+            function setPhase(text) { ui.stat.phase.textContent = text; }
+            function fmt(n) { return typeof n === 'number' ? n.toLocaleString('en-US') : n; }
+
+            function sampleInput() {
+                ui.input.value = `4\n0 0 0 1 1 1 1 0\n6\n4 3 4 2 3 2\n2 2 2 3\n3 3\n0`;
+            }
+
+            function parseInput(text) {
+                // 모든 정수를 추출
+                const nums = text.trim().split(/\s+/).map(Number).filter(n => !Number.isNaN(n));
+                if (nums.length < 1) throw new Error('입력 부족');
+
+                let i = 0;
+                const p1 = nums[i++];
+                if (!(p1 >= 4)) throw new Error('p1(첫 몰 둘레) >= 4 필요');
+                const A = [];
+                for (let k = 0; k < p1; k++) { A.push({ x: nums[i++], y: nums[i++] }); }
+                const p2 = nums[i++];
+                if (!(p2 >= 4)) throw new Error('p2(둘째 몰 둘레) >= 4 필요');
+                const B = [];
+                for (let k = 0; k < p2; k++) { B.push({ x: nums[i++], y: nums[i++] }); }
+                return { A, B };
+            }
+
+            function initFromInput() {
+                try {
+                    const { A, B } = parseInput(ui.input.value);
+                    reset();
+                    state = makeState(A, B);
+                    setPhase('준비됨');
+                    draw();
+                } catch (e) {
+                    alert('파싱 오류: ' + e.message);
+                }
+            }
+
+            function makeState(Ain, Bin) {
+                // 좌표 유효성 필터링 (0..2000)
+                const A = Ain.filter(p => p.x >= 0 && p.x < W && p.y >= 0 && p.y < H);
+                const B = Bin.filter(p => p.x >= 0 && p.x < W && p.y >= 0 && p.y < H);
+
+                // B 경계 비트맵
+                const isB = new Uint8Array(W * H);
+                let minX = 2000, minY = 2000, maxX = 0, maxY = 0;
+                let minXB = 2000, minYB = 2000, maxXB = 0, maxYB = 0;
+                for (const p of B) {
+                    const idx = p.y * W + p.x; isB[idx] = 1;
+                    if (p.x < minXB) minXB = p.x; if (p.x > maxXB) maxXB = p.x;
+                    if (p.y < minYB) minYB = p.y; if (p.y > maxYB) maxYB = p.y;
+                }
+                for (const p of A) {
+                    if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+                    if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+                }
+
+                // 방문/큐
+                const vis = new Uint8Array(W * H);
+                const parent = new Int32Array(W * H); parent.fill(-1);
+                const qx = []; const qy = []; let head = 0;
+
+                // 시드 삽입
+                let immediate = false;
+                for (const p of A) {
+                    const idx = p.y * W + p.x;
+                    if (!vis[idx]) {
+                        vis[idx] = 1;
+                        qx.push(p.x); qy.push(p.y);
+                        if (isB[idx]) { immediate = true; }
+                    }
+                }
+
+                const bbox = {
+                    minX: Math.min(minX, minXB), minY: Math.min(minY, minYB),
+                    maxX: Math.max(maxX, maxXB), maxY: Math.max(maxY, maxYB)
+                };
+
+                return {
+                    A, B, isB, vis, parent, qx, qy, head,
+                    dist: 0, curLayerEnd: qx.length, found: immediate ? 0 : -1,
+                    bbox,
+                    drawAccumulated: new Set(),
+                    meetIdx: -1,
+                };
+            }
+
+            function step(batch = 2000) {
+                if (!state) return;
+                if (state.found >= 0) return; // 이미 종료
+
+                const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+                let processed = 0;
+
+                while (processed < batch && state.head < state.qx.length && state.found < 0) {
+                    const x = state.qx[state.head];
+                    const y = state.qy[state.head];
+                    const baseIdx = y * W + x;
+                    state.head++;
+                    processed++;
+
+                    for (const [dx, dy] of dirs) {
+                        const nx = x + dx, ny = y + dy;
+                        if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+                        const nidx = ny * W + nx;
+                        if (state.vis[nidx]) continue;
+                        if (state.isB[nidx]) {
+                            // 도착
+                            state.found = state.dist + 1;
+                            state.parent[nidx] = baseIdx;
+                            state.meetIdx = nidx;
+                            // 큐를 비워 빠르게 종료
+                            state.qx.length = state.head; state.qy.length = state.head;
+                            break;
+                        }
+                        state.vis[nidx] = 1;
+                        state.parent[nidx] = baseIdx;
+                        state.qx.push(nx); state.qy.push(ny);
+                    }
+
+                    if (state.head === state.curLayerEnd) {
+                        state.curLayerEnd = state.qx.length;
+                        state.dist++;
+                    }
+                }
+            }
+
+            function reconstructPath() {
+                if (!state || state.meetIdx < 0) return [];
+                let idx = state.meetIdx;
+                const pts = [];
+                while (idx >= 0) {
+                    const y = Math.floor(idx / W), x = idx - y * W;
+                    pts.push({ x, y });
+                    idx = state.parent[idx];
+                }
+                return pts; // 거꾸로 (B→A)
+            }
+
+            // ===== 렌더링 =====
+            function computeView() {
+                if (!state) return { minX: 0, minY: 0, maxX: 2000, maxY: 2000, s: 1, m: 16 };
+                let { minX, minY, maxX, maxY } = state.bbox;
+                if (!ui.chkAutoZoom.checked) { minX = 0; minY = 0; maxX = 2000; maxY = 2000; }
+
+                // 약간의 여백
+                const margin = 2;
+                minX = Math.max(0, minX - margin);
+                minY = Math.max(0, minY - margin);
+                maxX = Math.min(2000, maxX + margin);
+                maxY = Math.min(2000, maxY + margin);
+
+                const vw = (maxX - minX + 1);
+                const vh = (maxY - minY + 1);
+                const s = Math.min((cv.width - 40) / vw, (cv.height - 40) / vh);
+                const m = 20;
+                ui.stat.view.textContent = `[${minX},${minY}]–[${maxX},${maxY}] s=${s.toFixed(2)}`;
+                return { minX, minY, maxX, maxY, s, m };
+            }
+
+            function drawGrid(view) {
+                if (!ui.chkGrid.checked) return;
+                const { minX, minY, maxX, maxY, s, m } = view;
+                ctx.save();
+                ctx.strokeStyle = colors.grid;
+                ctx.lineWidth = 1;
+                ctx.globalAlpha = 0.5;
+                ctx.beginPath();
+                for (let x = minX; x <= maxX; x++) {
+                    const cx = m + (x - minX) * s + 0.5;
+                    ctx.moveTo(cx, m);
+                    ctx.lineTo(cx, cv.height - m);
+                }
+                for (let y = minY; y <= maxY; y++) {
+                    const cy = cv.height - m - (y - minY + 1) * s + 0.5;
+                    ctx.moveTo(m, cy);
+                    ctx.lineTo(cv.width - m, cy);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawPoints(points, color, view) {
+                const { minX, minY, s, m } = view;
+                ctx.fillStyle = color;
+                for (const p of points) {
+                    const cx = m + (p.x - minX) * s;
+                    const cy = cv.height - m - (p.y - minY + 1) * s;
+                    ctx.fillRect(Math.round(cx), Math.round(cy), Math.max(1, Math.floor(s)), Math.max(1, Math.floor(s)));
+                }
+            }
+
+            function drawBitmapIndices(idxs, color, view) {
+                const { minX, minY, s, m } = view;
+                ctx.fillStyle = color;
+                for (const idx of idxs) {
+                    const y = Math.floor(idx / W), x = idx - y * W;
+                    const cx = m + (x - minX) * s;
+                    const cy = cv.height - m - (y - minY + 1) * s;
+                    ctx.fillRect(Math.round(cx), Math.round(cy), Math.max(1, Math.floor(s)), Math.max(1, Math.floor(s)));
+                }
+            }
+
+            function draw() {
+                ctx.fillStyle = colors.bg;
+                ctx.fillRect(0, 0, cv.width, cv.height);
+
+                const view = computeView();
+                drawGrid(view);
+
+                if (!state) return;
+
+                // 누적 방문 표시 (옵션)
+                if (ui.chkAccumulate.checked) {
+                    ctx.globalAlpha = 1.0;
+                    drawBitmapIndices(state.drawAccumulated, colors.visited, view);
+                }
+
+                // 경계점들
+                ctx.globalAlpha = 1;
+                drawPoints(state.A, colors.A, view);
+                drawPoints(state.B, colors.B, view);
+
+                // 최신 프론티어: head..curLayerEnd-1
+                ctx.globalAlpha = 1.0;
+                const frontier = [];
+                if (state.head < state.curLayerEnd) {
+                    for (let i = state.head; i < state.curLayerEnd; i++) {
+                        const x = state.qx[i], y = state.qy[i];
+                        frontier.push({ x, y });
+                        if (ui.chkAccumulate.checked) state.drawAccumulated.add(y * W + x);
+                    }
+                }
+                drawPoints(frontier, colors.frontier, view);
+
+                // 경로 표시
+                if (ui.chkShowPath.checked && state.found >= 0) {
+                    const path = reconstructPath();
+                    drawPoints(path, colors.path, view);
+                }
+
+                // HUD
+                ui.stat.dist.textContent = state.found >= 0 ? state.found : state.dist + ' (진행중)';
+                ui.stat.frontier.textContent = fmt(Math.max(0, state.curLayerEnd - state.head));
+                ui.stat.visited.textContent = fmt(countVisited(state.vis));
+                ui.stat.qlen.textContent = fmt(state.qx.length - state.head);
+                ui.stat.phase.textContent = state.found >= 0 ? '완료' : (animId ? '자동 재생' : '대기');
+            }
+
+            function countVisited(vis) {
+                // 빠른 근사 대신 정확히: 소형 입력이므로 충분
+                let c = 0;
+                for (let i = 0; i < vis.length; i++) if (vis[i]) c++;
+                return c;
+            }
+
+            function tick() {
+                const batch = Number(ui.rngBatch.value);
+                step(batch);
+                draw();
+                if (state && state.found < 0) {
+                    animId = requestAnimationFrame(tick);
+                } else {
+                    stop();
+                }
+            }
+
+            function run() {
+                if (!state) return;
+                if (state.found >= 0) return; // 이미 끝
+                if (!animId) {
+                    animId = requestAnimationFrame(tick);
+                    ui.btnRun.disabled = true;
+                    ui.btnPause.disabled = false;
+                }
+            }
+
+            function stop() {
+                if (animId) cancelAnimationFrame(animId);
+                animId = null;
+                ui.btnRun.disabled = false;
+                ui.btnPause.disabled = true;
+            }
+
+            function stepOnce() {
+                if (!state) return;
+                if (state.found >= 0) return;
+                step(Number(ui.rngBatch.value));
+                draw();
+            }
+
+            function reset() {
+                stop();
+                state = null;
+                ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, cv.width, cv.height);
+                ui.stat.dist.textContent = '-';
+                ui.stat.frontier.textContent = '-';
+                ui.stat.visited.textContent = '-';
+                ui.stat.qlen.textContent = '-';
+                setPhase('대기');
+            }
+
+            // 이벤트
+            ui.btnSample.addEventListener('click', sampleInput);
+            ui.btnInit.addEventListener('click', initFromInput);
+            ui.btnRun.addEventListener('click', run);
+            ui.btnPause.addEventListener('click', stop);
+            ui.btnStep.addEventListener('click', stepOnce);
+            ui.btnReset.addEventListener('click', reset);
+            ui.rngBatch.addEventListener('input', () => ui.lblBatch.textContent = ui.rngBatch.value);
+            ui.chkAutoZoom.addEventListener('change', draw);
+            ui.chkGrid.addEventListener('change', draw);
+            ui.chkAccumulate.addEventListener('change', draw);
+            ui.chkShowPath.addEventListener('change', draw);
+
+            // 초기 UI
+            sampleInput();
+            ui.lblBatch.textContent = ui.rngBatch.value;
+            draw();
+        })();
+    </script>
+</body>
+
+</html>
