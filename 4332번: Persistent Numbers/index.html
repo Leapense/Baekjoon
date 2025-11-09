@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Persistent Numbers — 실행 과정 시각화</title>
+    <style>
+        :root {
+            --bg: #0f1220;
+            --panel: #151935;
+            --ink: #e7eaf6;
+            --muted: #aeb3d6;
+            --accent: #8aa0ff;
+            --accent-2: #66d9a3;
+            --warn: #ffb86c;
+            --bad: #ff6b81;
+            --chip: #1b2150;
+            --chip-on: #283176;
+            --code: #0b0f28;
+            --grid: #20264d;
+            --green: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #0b0f24, #0f1220 30%, #0f1220);
+            color: var(--ink);
+            font: 15px/1.6 ui-sans-serif, system-ui, Segoe UI, Roboto, Apple Color Emoji, Noto Color Emoji;
+        }
+
+        header {
+            padding: 28px 20px 12px;
+            border-bottom: 1px solid #1b1f44;
+            position: sticky;
+            top: 0;
+            backdrop-filter: saturate(140%) blur(6px);
+            background-color: #0f1220d0;
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: .2px;
+        }
+
+        .sub {
+            color: var(--muted);
+            margin: 0
+        }
+
+        main {
+            padding: 18px;
+            max-width: 1100px;
+            margin: 0 auto
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid #1b1f44;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        .row>* {
+            flex: 1 1 280px
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid #2a316a;
+            background: #0c1232;
+            color: var(--ink);
+            outline: none;
+            font-size: 15px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        button {
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #2a316a;
+            background: var(--chip);
+            color: #e8ecff;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+
+        button:hover {
+            background: var(--chip-on);
+            transform: translateY(-1px)
+        }
+
+        button.primary {
+            background: linear-gradient(180deg, #6d85ff, #5b70ff);
+            border-color: #4a5fe0;
+            color: white;
+            font-weight: 600
+        }
+
+        button.ghost {
+            background: transparent
+        }
+
+        .chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .chip {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #12183a;
+            border: 1px solid #283176;
+            cursor: pointer;
+            color: #c8cff9
+        }
+
+        .chip:hover {
+            background: #19204e
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace
+        }
+
+        .section-title {
+            font-size: 14px;
+            letter-spacing: .3px;
+            text-transform: uppercase;
+            color: #9aa3dd;
+            margin: 2px 0 10px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px
+        }
+
+        @media (min-width: 980px) {
+            .grid {
+                grid-template-columns: 1.1fr .9fr
+            }
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 480px;
+            overflow: auto;
+            padding-right: 6px
+        }
+
+        .step {
+            background: var(--code);
+            border: 1px solid #1b1f44;
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        .step .head {
+            display: flex;
+            align-items: baseline;
+            gap: 8px
+        }
+
+        .tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #10173a;
+            border: 1px solid #283176;
+            color: #b8c1ff
+        }
+
+        .tag.ok {
+            background: #0f2e22;
+            border-color: #1a5;
+            color: #bdf5d8
+        }
+
+        .tag.warn {
+            background: #2e2217;
+            border-color: #c80;
+            color: #ffd9a6
+        }
+
+        .tag.bad {
+            background: #2e1820;
+            border-color: #d33;
+            color: #ffbac8
+        }
+
+        .kv {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px
+        }
+
+        .kv .box {
+            background: #0f1433;
+            border: 1px dashed #2a347a;
+            border-radius: 10px;
+            padding: 6px 8px;
+            min-width: 120px;
+        }
+
+        .digits {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px
+        }
+
+        .d {
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 1px solid #2a316a;
+            background: #151b46
+        }
+
+        .d.pick {
+            border-color: #3b57ff;
+            box-shadow: 0 0 0 1px #3b57ff50 inset
+        }
+
+        .d.greedy {
+            border-color: #1bbf70;
+            box-shadow: 0 0 0 1px #1bbf7050 inset
+        }
+
+        .final {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: .3px;
+            color: white;
+            background: linear-gradient(180deg, #18215a, #101641);
+            border: 1px solid #25307a;
+            border-radius: 14px;
+            padding: 12px 14px;
+        }
+
+        .warnline {
+            color: #ffd9a6
+        }
+
+        .tree {
+            max-height: 560px;
+            overflow: auto;
+            padding-right: 6px
+        }
+
+        details.node {
+            background: #0e1331;
+            border: 1px solid #1b1f44;
+            border-radius: 12px;
+            margin: 10px 0;
+            padding: 6px 10px 10px;
+        }
+
+        details.node>summary {
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
+            outline: none;
+        }
+
+        details.node>summary::-webkit-details-marker {
+            display: none
+        }
+
+        .node .label {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center
+        }
+
+        .node .label .n {
+            font-weight: 700
+        }
+
+        .node.greedy {
+            border-color: #1d7;
+            box-shadow: 0 0 0 1px #1bbf7040 inset
+        }
+
+        .leaf {
+            color: #9ff8c5;
+            font-weight: 700
+        }
+
+        .fail {
+            color: #ffb3c2
+        }
+
+        .cap {
+            color: #ffd59c
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .small {
+            font-size: 12px
+        }
+
+        .hl {
+            color: #a8bbff
+        }
+
+        .sep {
+            height: 1px;
+            background: var(--grid);
+            margin: 12px 0
+        }
+
+        .footer {
+            color: #93a0da;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 8px
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Persistent Numbers — 실행 과정 시각화</h1>
+        <p class="sub">자릿수 곱이 N이 되도록 만드는 최소 수를, 그리디 과정과(단계별) 전체 분해 트리로 시각화합니다.</p>
+    </header>
+
+    <main>
+        <div class="card">
+            <div class="row">
+                <div>
+                    <label class="section-title">입력 N (최대 1000자리 정수)</label>
+                    <input id="inputN" type="text" class="mono" placeholder="예: 768" />
+                    <div class="chips" style="margin-top:8px">
+                        <span class="chip" data-sample="0">0</span>
+                        <span class="chip" data-sample="1">1</span>
+                        <span class="chip" data-sample="4">4</span>
+                        <span class="chip" data-sample="7">7</span>
+                        <span class="chip" data-sample="18">18</span>
+                        <span class="chip" data-sample="49">49</span>
+                        <span class="chip" data-sample="51">51</span>
+                        <span class="chip" data-sample="768">768</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="section-title">조작</label>
+                    <div class="controls">
+                        <button id="runGreedy" class="primary">그리디 단계 실행</button>
+                        <button id="buildTree">전체 경로 트리 생성</button>
+                        <button id="clear" class="ghost">초기화</button>
+                    </div>
+                    <div class="toolbar small" style="margin-top:8px">
+                        <span>애니메이션 간격(ms)</span>
+                        <input id="delay" type="range" min="0" max="800" value="250" />
+                        <span class="hl" id="delayVal">250</span>
+                        <span class="muted">트리 노드 상한:</span>
+                        <input id="cap" type="number" value="3000" min="100" max="20000"
+                            style="width:88px; padding:6px 8px; border-radius:10px; border:1px solid #2a316a; background:#0c1232; color:var(--ink)" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="section-title">그리디 경로 — 단계별 로그</div>
+                <div id="timeline" class="timeline"></div>
+            </div>
+            <div class="card">
+                <div class="section-title">전체 분해 트리 (선택 사항)</div>
+                <div id="tree" class="tree"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">최종 결과</div>
+            <div id="result" class="final">입력을 넣고 실행해 보세요.</div>
+            <div class="footer">참고: 가능한 해가 없으면 “There is no such number.”를 출력합니다.</div>
+        </div>
+    </main>
+
+    <script>
+        // ---------- 유틸 ----------
+        const $ = sel => document.querySelector(sel);
+        const el = (tag, cls, text) => {
+            const e = document.createElement(tag);
+            if (cls) e.className = cls;
+            if (text !== undefined) e.textContent = text;
+            return e;
+        };
+        const toBigInt = (s) => {
+            if (!/^\d+$/.test(s)) throw new Error("정수만 입력하세요.");
+            // BigInt는 선행 0 허용. 그대로 처리 가능.
+            return BigInt(s);
+        };
+        const cmpStrNum = (a, b) => { // 숫자 문자열 비교(길이 → 사전)
+            if (a.length !== b.length) return a.length - b.length;
+            return a.localeCompare(b);
+        };
+
+        // ---------- 핵심 로직(그리디) ----------
+        function greedyFactorSteps(n) {
+            // 단계 로그 구조: { kind, title, nBefore, nAfter, candidates, pick, digitsSnapshot }
+            const steps = [];
+            const digits = [];
+
+            // 특수 처리
+            if (n === 0n) {
+                steps.push({ kind: 'special', title: '특수: N=0 → 10', nBefore: 0n, nAfter: 0n, detail: '1*0=0을 만족하는 최소 두 자리 수는 10' });
+                return { steps, digits: ['1', '0'], done: true, result: "10", reason: "N=0 특수" };
+            }
+            if (1n <= n && n <= 9n) {
+                const res = "1" + n.toString();
+                steps.push({ kind: 'special', title: `특수: 한 자리 N=${n} → 1${n}`, nBefore: n, nAfter: n, detail: '첫 스텝이 “실제로 일어나야” 하므로 두 자리로 보정' });
+                return { steps, digits: ['1', n.toString()], done: true, result: res, reason: "N=1..9 특수" };
+            }
+
+            let cur = n;
+            for (let d = 9n; d >= 2n; d--) {
+                // 각 d에 대한 후보 평가 스텝(보기 좋게 한 번만 기록)
+                const can = [];
+                for (let k = 9n; k >= 2n; k--) if (cur % k === 0n) can.push(Number(k));
+                steps.push({ kind: 'scan', title: `후보 탐색: n=${cur}`, nBefore: cur, nAfter: cur, candidates: [...can], pick: (cur % d === 0n ? Number(d) : null), picked: false, digitsSnapshot: [...digits] });
+
+                while (cur % d === 0n) {
+                    const before = cur;
+                    cur = cur / d;
+                    digits.push(Number(d));
+                    steps.push({ kind: 'divide', title: `나누기: ${before} ÷ ${d} = ${cur}`, nBefore: before, nAfter: cur, d: Number(d), digitsSnapshot: [...digits] });
+                }
+            }
+
+            if (cur !== 1n) {
+                steps.push({ kind: 'fail', title: `불가능: 소인수 2..9로 완전히 분해 실패 (남은 ${cur})`, nBefore: cur, nAfter: cur });
+                return { steps, digits: [], done: false, result: null };
+            }
+
+            // 정렬(최소 수 만들기)
+            const sorted = [...digits].sort((a, b) => a - b).map(String);
+            const res = sorted.join('');
+            steps.push({ kind: 'sort', title: `오름차순 정렬로 최소 수 구성 → ${res}`, digitsSnapshot: [...sorted] });
+            return { steps, digits: sorted, done: true, result: res };
+        }
+
+        // ---------- 전체 경로 트리(완전 탐색, 상한 있음) ----------
+        function buildFullTree(n, cap = 3000) {
+            // 노드: { id, n, digitPicked, digits, children:[], greedyHop:boolean, leaf:boolean, fail:boolean }
+            let idSeq = 1;
+            const newId = () => idSeq++;
+            const root = { id: newId(), n: n, digitPicked: null, digits: [], children: [], greedyHop: false, leaf: false, fail: false };
+            let nodes = 1, cut = false;
+
+            const stack = [root];
+            const pathGreedy = []; // greedy 선택 경로 기록용
+
+            // 먼저 그리디로 경로 산출해둔다(트리에서 하이라이트)
+            const greedy = greedyFactorSteps(n);
+            let gN = n;
+            const greedyPicks = [];
+            if (greedy.done && !(n === 0n || (1n <= n && n <= 9n))) {
+                // 특수케이스가 아니고 일반 분해인 경우, 그리디에서 실제로 나눈 순서 추출
+                let temp = n;
+                for (let d = 9n; d >= 2n; d--) {
+                    while (temp % d === 0n) {
+                        greedyPicks.push(Number(d));
+                        temp /= d;
+                    }
+                }
+            }
+
+            // DFS with cap
+            while (stack.length) {
+                const node = stack.pop();
+
+                // 종료 조건들
+                if (node.n === 1n) { node.leaf = true; continue; }
+                if (node.n === 0n) { // 0은 특수: 10이 유일. 일반 트리로는 더 내려갈 의미가 없음.
+                    node.leaf = true; continue;
+                }
+                if (1n <= node.n && node.n <= 9n) {
+                    // 첫 스텝이 실제 발생해야 하므로, 여기서 leaf로 취급 (정답은 1 + n)
+                    node.leaf = true; continue;
+                }
+
+                // 후보 분기
+                const choices = [];
+                for (let d = 9n; d >= 2n; d--) if (node.n % d === 0n) choices.push(Number(d));
+                if (!choices.length) { node.fail = true; continue; }
+
+                // greedy 경로 매칭(다음에 고를 d)
+                const nextGreedyD = greedyPicks[pathGreedy.length];
+
+                for (const d of choices) {
+                    if (nodes >= cap) { cut = true; break; }
+                    const child = {
+                        id: newId(), n: node.n / BigInt(d), digitPicked: d,
+                        digits: node.digits.concat([d]),
+                        children: [], greedyHop: (d === nextGreedyD),
+                        leaf: false, fail: false
+                    };
+                    node.children.push(child);
+                    nodes++;
+                }
+                // push children 역순으로 넣으면 2..9 우선 DFS가 되지만, 여기선 이미 9..2로 생성했으므로 그대로 둠.
+                for (let i = node.children.length - 1; i >= 0; i--) stack.push(node.children[i]);
+
+                if (cut) break;
+                if (node.greedyHop) pathGreedy.push(node.digitPicked);
+                // 루트에는 digitPicked가 없으니 위 라인은 루트에서 영향 없음.
+            }
+
+            // 후처리: greedy 경로 하이라이트
+            // 루트→자식→... 에서 digit 시퀀스가 greedyPicks prefix와 일치하는 노드들에 greedy 클래스 부여
+            function markGreedy(node, prefix = []) {
+                // 루트 처리
+                let ok = true;
+                for (let i = 0; i < prefix.length; i++) {
+                    if (prefix[i] !== greedyPicks[i]) { ok = false; break; }
+                }
+                if (ok && prefix.length <= greedyPicks.length) node.greedyHop = true;
+
+                // 자식 처리
+                for (const ch of node.children) {
+                    const pre2 = prefix.concat([ch.digitPicked]);
+                    markGreedy(ch, pre2);
+                }
+            }
+            markGreedy(root, []);
+
+            return { root, nodes, cut };
+        }
+
+        // ---------- 렌더링 ----------
+        function renderSteps(container, result) {
+            container.innerHTML = "";
+            const { steps } = result;
+
+            let i = 0;
+            const delay = Number($("#delay").value);
+            $("#delayVal").textContent = delay;
+
+            function drawOne() {
+                if (i >= steps.length) return;
+                const s = steps[i++];
+                const box = el('div', 'step');
+                const head = el('div', 'head');
+                const title = el('div', null, s.title);
+                const tag = el('span', 'tag', s.kind.toUpperCase());
+                if (s.kind === 'divide') tag.classList.add('ok');
+                if (s.kind === 'special') tag.classList.add('warn');
+                if (s.kind === 'fail') tag.classList.add('bad');
+                head.append(tag, title);
+                box.append(head);
+
+                if (s.candidates) {
+                    const kv = el('div', 'kv');
+                    kv.append(el('div', 'box', '가능한 나눗수:'));
+                    const ds = el('div', 'digits');
+                    s.candidates.forEach(d => {
+                        const dEl = el('span', 'd', String(d));
+                        if (s.pick === d) dEl.classList.add('greedy');
+                        ds.append(dEl);
+                    });
+                    kv.append(ds);
+                    box.append(kv);
+                }
+
+                if (s.digitsSnapshot) {
+                    const kv2 = el('div', 'kv');
+                    kv2.append(el('div', 'box', '선택된 자릿수(현재):'));
+                    const ds2 = el('div', 'digits');
+                    s.digitsSnapshot.forEach(d => {
+                        const dEl = el('span', 'd pick', String(d));
+                        ds2.append(dEl);
+                    });
+                    kv2.append(ds2);
+                    box.append(kv2);
+                }
+
+                container.append(box);
+                if (i < steps.length) setTimeout(drawOne, delay);
+            }
+            drawOne();
+        }
+
+        function renderTree(container, treeInfo, greedyFinal) {
+            container.innerHTML = "";
+            const { root, nodes, cut } = treeInfo;
+
+            const info = el('div', 'small muted', `생성 노드: ${nodes}${cut ? ' (상한으로 일부 생략됨)' : ''}`);
+            container.append(info);
+            container.append(el('div', 'sep'));
+
+            function nodeLabel(nd) {
+                const wrap = el('div', 'label');
+                const n = el('span', 'n', `n=${nd.n.toString()}`);
+                wrap.append(n);
+
+                if (nd.digitPicked != null) {
+                    wrap.append(el('span', 'tag', `pick ${nd.digitPicked}`));
+                }
+                if (nd.leaf) {
+                    wrap.append(el('span', 'tag ok leaf', 'leaf'));
+                    // leaf일 때 최소 수 표현을 보조로 보여주자
+                    if (nd.n === 1n) {
+                        const mins = nd.digits.slice().sort((a, b) => a - b).join('');
+                        wrap.append(el('span', 'tag', `→ ${mins}`));
+                    } else if (nd.n === 0n) {
+                        wrap.append(el('span', 'tag', '→ 10 (특수)'));
+                    } else if (1n <= nd.n && nd.n <= 9n) {
+                        wrap.append(el('span', 'tag', `→ 1${nd.n.toString()} (특수)`));
+                    }
+                }
+                if (nd.fail) wrap.append(el('span', 'tag bad fail', '분해 불가'));
+                return wrap;
+            }
+
+            function build(nd) {
+                const det = el('details', 'node' + (nd.greedyHop ? ' greedy' : '')); det.open = (nd.id <= 12); // 초반만 펼침
+                const sum = el('summary'); sum.append(nodeLabel(nd)); det.append(sum);
+                if (nd.children && nd.children.length) {
+                    nd.children.forEach(ch => det.append(build(ch)));
+                }
+                return det;
+            }
+
+            container.append(build(root));
+
+            if (greedyFinal && greedyFinal.done) {
+                container.append(el('div', 'sep'));
+                const res = el('div', null, `그리디 최소 해: ${greedyFinal.result}`);
+                res.className = 'small';
+                container.append(res);
+            }
+        }
+
+        function showResult(str, ok = true) {
+            const r = $("#result"); r.textContent = str;
+            r.style.borderColor = ok ? '#25307a' : '#d33';
+            r.style.boxShadow = ok ? '' : '0 0 0 1px #d333';
+            r.style.color = ok ? 'white' : '#ffd2db';
+        }
+
+        // ---------- 이벤트 바인딩 ----------
+        $(".chips").addEventListener("click", (e) => {
+            const c = e.target.closest(".chip");
+            if (!c) return;
+            $("#inputN").value = c.dataset.sample;
+        });
+
+        $("#delay").addEventListener("input", (e) => {
+            $("#delayVal").textContent = e.target.value;
+        });
+
+        $("#runGreedy").addEventListener("click", () => {
+            const s = $("#inputN").value.trim();
+            if (!s) { showResult("입력을 넣어주세요.", false); return; }
+            let N;
+            try { N = toBigInt(s); }
+            catch (e) { showResult(e.message, false); return; }
+
+            const info = greedyFactorSteps(N);
+            renderSteps($("#timeline"), info);
+
+            if (!info.done) {
+                showResult("There is no such number.", false);
+            } else {
+                showResult(info.result, true);
+            }
+        });
+
+        $("#buildTree").addEventListener("click", () => {
+            const s = $("#inputN").value.trim();
+            if (!s) { showResult("입력을 넣어주세요.", false); return; }
+            let N;
+            try { N = toBigInt(s); }
+            catch (e) { showResult(e.message, false); return; }
+
+            const cap = Math.max(100, Math.min(20000, Number($("#cap").value) || 3000));
+            const treeInfo = buildFullTree(N, cap);
+            const greedy = greedyFactorSteps(N);
+            renderTree($("#tree"), treeInfo, greedy);
+
+            if (greedy.done) showResult(greedy.result, true);
+            else showResult("There is no such number.", false);
+        });
+
+        $("#clear").addEventListener("click", () => {
+            $("#timeline").innerHTML = "";
+            $("#tree").innerHTML = "";
+            showResult("입력을 넣고 실행해 보세요.", true);
+        });
+
+        // 기본값
+        $("#inputN").value = "768";
+    </script>
+</body>
+
+</html>
