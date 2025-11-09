@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tic Tac Toe 유효성 판정 시각화</title>
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --panel: #121821;
+            --muted: #7f8da3;
+            --text: #eaf2ff;
+            --accent: #7aa2f7;
+            --good: #55d187;
+            --bad: #ff6b6b;
+            --warn: #ffd166;
+            --line: #263140;
+            --hl: #1e2a3a;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(120deg, #091019 0%, #0d1320 60%, #0a1018 100%);
+            color: var(--text);
+            font: 14.5px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Apple SD Gothic Neo, Malgun Gothic, Helvetica, Arial;
+        }
+
+        header {
+            padding: 22px 20px 8px;
+            text-align: center
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: .2px
+        }
+
+        header p {
+            margin: 6px 0 0;
+            color: var(--muted)
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 16px auto 48px;
+            padding: 0 16px;
+            display: grid;
+            gap: 16px;
+            grid-template-columns: 360px 1fr;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, .25), inset 0 1px 0 rgba(255, 255, 255, .03);
+        }
+
+        .card h2 {
+            margin: 6px 6px 12px;
+            font-size: 16px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 10px 6px 4px;
+        }
+
+        .cell {
+            aspect-ratio: 1/1;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 28px;
+            border-radius: 12px;
+            background: #0d151f;
+            border: 1px solid var(--line);
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: transform .05s ease;
+        }
+
+        .cell:active {
+            transform: scale(.98)
+        }
+
+        .cell[data-val="X"] {
+            color: #8bd5ff
+        }
+
+        .cell[data-val="O"] {
+            color: #ffd166
+        }
+
+        .cell[data-val="."] {
+            color: #39485f
+        }
+
+        .cell.hl {
+            box-shadow: 0 0 0 2px var(--accent) inset, 0 0 18px rgba(122, 162, 247, .35)
+        }
+
+        .grid-lines {
+            position: relative;
+            margin-top: 8px;
+            height: 8px;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 6px;
+        }
+
+        .gline {
+            height: 8px;
+            border-radius: 6px;
+            background: #162030;
+            opacity: .45
+        }
+
+        .gline.winX {
+            background: linear-gradient(90deg, #2b6fff, #18c1ff);
+            opacity: 1
+        }
+
+        .gline.winO {
+            background: linear-gradient(90deg, #f7b733, #ffd166);
+            opacity: 1
+        }
+
+        .stats {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 6px 0;
+        }
+
+        .pill {
+            background: var(--hl);
+            border: 1px solid var(--line);
+            color: var(--muted);
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+            letter-spacing: .2px;
+        }
+
+        .pill strong {
+            color: var(--text)
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 12px 6px 0
+        }
+
+        button {
+            background: #0e1825;
+            color: var(--text);
+            border: 1px solid var(--line);
+            padding: 9px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #101c2c
+        }
+
+        button.primary {
+            border-color: #2850a8;
+            background: #14213a
+        }
+
+        button.good {
+            border-color: #1c7f4a;
+            background: #0f2a1e
+        }
+
+        button.bad {
+            border-color: #7f1c1c;
+            background: #2a0f0f
+        }
+
+        .flow {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .log {
+            border-radius: 12px;
+            background: #0f1622;
+            border: 1px solid var(--line);
+            padding: 10px 12px;
+            max-height: 260px;
+            overflow: auto;
+        }
+
+        .log .entry {
+            padding: 8px 6px;
+            border-bottom: 1px dashed #233042
+        }
+
+        .log .entry:last-child {
+            border-bottom: none
+        }
+
+        .entry .k {
+            color: var(--muted)
+        }
+
+        .entry .v {
+            color: #d7e3ff
+        }
+
+        .entry.good {
+            background: linear-gradient(180deg, rgba(85, 209, 135, .08), transparent)
+        }
+
+        .entry.bad {
+            background: linear-gradient(180deg, rgba(255, 107, 107, .08), transparent)
+        }
+
+        .entry.warn {
+            background: linear-gradient(180deg, rgba(255, 209, 102, .09), transparent)
+        }
+
+        .decision {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Decision tree */
+        .tree {
+            --node: #1a2433;
+            --nodeLine: #2b3a52;
+            --active: #7aa2f7;
+            --yes: #55d187;
+            --no: #ff6b6b;
+            --neutral: #ffd166;
+            padding: 12px;
+            border-radius: 12px;
+            background: #0f1622;
+            border: 1px solid var(--line);
+        }
+
+        .t-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            margin: 6px 0
+        }
+
+        .node {
+            position: relative;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--node);
+            border: 1px solid var(--nodeLine);
+            min-width: 120px;
+            max-width: 240px;
+        }
+
+        .node .title {
+            font-weight: 800;
+            font-size: 12px;
+            color: #c6d3f5;
+            letter-spacing: .3px
+        }
+
+        .node .desc {
+            font-size: 12px;
+            color: #9bb0cf
+        }
+
+        .node.active {
+            box-shadow: 0 0 0 2px var(--active) inset, 0 0 18px rgba(122, 162, 247, .25)
+        }
+
+        .node.yes {
+            box-shadow: 0 0 0 2px var(--good) inset
+        }
+
+        .node.no {
+            box-shadow: 0 0 0 2px var(--bad) inset
+        }
+
+        .edge {
+            position: relative;
+            padding-left: 22px;
+            margin-left: 4px
+        }
+
+        .edge::before {
+            content: "";
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--line);
+            border-radius: 2px;
+        }
+
+        .edge .label {
+            font-size: 11px;
+            color: #8ea2c7;
+            margin: 0 0 6px 0;
+            font-weight: 700
+        }
+
+        .final {
+            padding: 10px 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 800;
+            border: 1px solid var(--line);
+        }
+
+        .final.yes {
+            color: var(--good);
+            background: linear-gradient(180deg, rgba(85, 209, 135, .08), transparent)
+        }
+
+        .final.no {
+            color: var(--bad);
+            background: linear-gradient(180deg, rgba(255, 107, 107, .08), transparent)
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+            margin: 4px 6px 0
+        }
+
+        .subtle {
+            color: #91a1bb
+        }
+
+        .kbd {
+            background: #1a2332;
+            border: 1px solid var(--line);
+            padding: 1px 6px;
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
+        }
+
+        .hr {
+            height: 1px;
+            background: var(--line);
+            margin: 10px 0
+        }
+
+        .footer {
+            max-width: 1100px;
+            margin: 0 auto 48px;
+            padding: 0 16px;
+            color: var(--muted);
+            text-align: center
+        }
+
+        .sr {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(1px, 1px, 1px, 1px)
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Tic Tac Toe 유효성 판정 – 단계별 시각화</h1>
+        <p>결정 트리(<span class="subtle">개수 제약 → 동시 승리? → X승리? → O승리? → 둘 다 아님</span>)를 따라가며 보드를 검증합니다.</p>
+    </header>
+
+    <div class="wrap">
+        <!-- LEFT: Board -->
+        <section class="card">
+            <h2>① 보드 편집</h2>
+            <div id="board" class="grid" aria-label="tic-tac-toe board"></div>
+            <div class="grid-lines" aria-hidden="true" id="gridLines">
+                <div class="gline" title="가로0"></div>
+                <div class="gline" title="가로1"></div>
+                <div class="gline" title="가로2"></div>
+                <div class="gline" title="세로0"></div>
+                <div class="gline" title="세로1"></div>
+                <div class="gline" title="세로2"></div>
+                <div class="gline" title="대각 ↘"></div>
+                <div class="gline" title="대각 ↙"></div>
+            </div>
+            <div class="stats" id="stats"></div>
+            <div class="controls">
+                <button id="prevBtn">이전</button>
+                <button id="nextBtn" class="primary">다음</button>
+                <button id="runBtn" class="good">전체 실행</button>
+                <button id="resetBtn">리셋</button>
+                <button id="ex1Btn">예시 1 불러오기</button>
+                <button id="ex2Btn">예시 2 불러오기</button>
+            </div>
+            <p class="hint">셀을 클릭하면 <span class="kbd">.</span> → <span class="kbd">X</span> → <span class="kbd">O</span>
+                순서로 바뀝니다.</p>
+        </section>
+
+        <!-- RIGHT: Flow -->
+        <section class="flow">
+            <div class="card">
+                <h2>② 결정 트리</h2>
+                <div class="tree" id="tree">
+                    <!-- A -->
+                    <div class="t-row">
+                        <div class="node" id="node-A">
+                            <div class="title">[A] 개수 검사</div>
+                            <div class="desc">#X == #O 또는 #X == #O + 1 ?</div>
+                        </div>
+                        <div class="edge">
+                            <div class="label">참</div>
+                            <!-- B -->
+                            <div class="t-row">
+                                <div class="node" id="node-B">
+                                    <div class="title">[B] 동시 승리?</div>
+                                    <div class="desc">winX && winO ?</div>
+                                </div>
+                                <div class="edge">
+                                    <div class="label">거짓</div>
+                                    <!-- C D E -->
+                                    <div class="t-row">
+                                        <div class="node" id="node-C">
+                                            <div class="title">[C] X 승리?</div>
+                                            <div class="desc">winX ⟹ #X == #O + 1</div>
+                                        </div>
+                                        <div class="node" id="node-D">
+                                            <div class="title">[D] O 승리?</div>
+                                            <div class="desc">winO ⟹ #X == #O</div>
+                                        </div>
+                                        <div class="node" id="node-E">
+                                            <div class="title">[E] 승자 없음</div>
+                                            <div class="desc">개수조건 충족 ⟹ yes</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="edge">
+                                    <div class="label">참</div>
+                                    <div class="final no">no</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="edge">
+                            <div class="label">거짓</div>
+                            <div class="final no">no</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>③ 단계 로그</h2>
+                <div id="log" class="log" aria-live="polite"></div>
+            </div>
+
+            <div class="card">
+                <h2>④ 최종 판정</h2>
+                <div id="verdict" class="final">대기 중…</div>
+                <div class="hr"></div>
+                <div class="hint">
+                    단계 요약: <span class="subtle">1) 개수 제약 → 2) 승리 라인 탐색 → 3) 모순 체크 → 4) 승리자 있으면 턴 일치성 → 5) 둘 다 아니면
+                        yes</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="footer">
+        <p>알고리즘은 O(1) 검사(8개 라인)로 동작합니다. 입력 예시 1은 <span class="subtle">yes</span>, 예시 2는 <span class="subtle">no</span>가
+            되어야 합니다.</p>
+    </div>
+
+    <script>
+        /* ===== Utility & Model ===== */
+        const LINES = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // cols
+            [0, 4, 8], [2, 4, 6]          // diags
+        ];
+
+        const $ = sel => document.querySelector(sel);
+        const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+        function makeBoard() {
+            const boardEl = $('#board');
+            boardEl.innerHTML = '';
+            const cells = [];
+            for (let i = 0; i < 9; i++) {
+                const div = document.createElement('div');
+                div.className = 'cell';
+                div.dataset.idx = i;
+                div.dataset.val = '.';
+                div.textContent = '.';
+                div.addEventListener('click', () => {
+                    const cur = div.dataset.val;
+                    const next = cur === '.' ? 'X' : (cur === 'X' ? 'O' : '.');
+                    setCell(i, next);
+                    logReset();
+                    stepIndex = -1;
+                    setVerdict('대기 중…', null);
+                    clearTreeActive();
+                    clearGridWins();
+                    updateStats();
+                });
+                boardEl.appendChild(div);
+                cells.push(div);
+            }
+            return cells;
+        }
+        const cells = makeBoard();
+
+        function boardValues() {
+            return cells.map(c => c.dataset.val);
+        }
+        function setCell(i, v) {
+            const c = cells[i];
+            c.dataset.val = v;
+            c.textContent = v;
+        }
+        function loadBoard(str) { // 9-length string like "X.OOO.XXX"
+            for (let i = 0; i < 9; i++) setCell(i, str[i] ?? '.');
+            updateStats();
+        }
+
+        function countXO(b) {
+            let x = 0, o = 0, d = 0;
+            for (const v of b) {
+                if (v === 'X') x++;
+                else if (v === 'O') o++;
+                else if (v === '.') d++;
+            }
+            return { x, o, d };
+        }
+        function findWins(b, p) {
+            const wins = [];
+            for (let i = 0; i < LINES.length; i++) {
+                const [a, b1, c] = LINES[i];
+                const ok = (b[a] === p && b[b1] === p && b[c] === p);
+                if (ok) wins.push(i);
+            }
+            return wins;
+        }
+
+        /* ===== View helpers ===== */
+        function updateStats() {
+            const b = boardValues();
+            const { x, o, d } = countXO(b);
+            $('#stats').innerHTML = `
+    <div class="pill">#X: <strong>${x}</strong></div>
+    <div class="pill">#O: <strong>${o}</strong></div>
+    <div class="pill">빈칸: <strong>${d}</strong></div>
+    <div class="pill">개수조건: <strong>${(x === o || x === o + 1) ? '충족' : '불충족'}</strong></div>
+  `;
+        }
+
+        function clearGridWins() {
+            $$('#gridLines .gline').forEach(el => {
+                el.classList.remove('winX', 'winO');
+            });
+            cells.forEach(c => c.classList.remove('hl'));
+        }
+        function paintWinLines(winX, winO) {
+            const glines = $$('#gridLines .gline');
+            winX.forEach(idx => {
+                glines[idx].classList.add('winX');
+            });
+            winO.forEach(idx => {
+                glines[idx].classList.add('winO');
+            });
+            // highlight involved cells
+            const toHL = new Set();
+            [...winX, ...winO].forEach(li => LINES[li].forEach(i => toHL.add(i)));
+            toHL.forEach(i => cells[i].classList.add('hl'));
+        }
+
+        function setVerdict(msg, kind) { // kind: 'yes'|'no'|null
+            const box = $('#verdict');
+            box.classList.remove('yes', 'no');
+            box.textContent = msg;
+            if (kind) box.classList.add(kind);
+        }
+
+        function logReset() { $('#log').innerHTML = ''; }
+        function logPush(text, type = null) {
+            const div = document.createElement('div');
+            div.className = 'entry' + (type ? (' ' + type) : '');
+            div.innerHTML = text;
+            $('#log').appendChild(div);
+            // autoscroll
+            const el = $('#log'); el.scrollTop = el.scrollHeight;
+        }
+
+        /* ===== Decision Tree UI ===== */
+        function clearTreeActive() {
+            ['A', 'B', 'C', 'D', 'E'].forEach(id => {
+                const n = $('#node-' + id);
+                n.classList.remove('active', 'yes', 'no');
+            });
+        }
+        function markNode(id, state) { // state: 'active'|'yes'|'no'
+            const n = $('#node-' + id);
+            if (!n) return;
+            n.classList.remove('active', 'yes', 'no');
+            if (state) n.classList.add(state);
+        }
+
+        /* ===== Algorithm as steps ===== */
+        let steps = []; // each: {run: fn, focusNode, label}
+        let snapshot = null; // last computed summary
+        let stepIndex = -1;
+
+        function computeSummary(b) {
+            const cnt = countXO(b);
+            const cnt_ok = (cnt.x === cnt.o) || (cnt.x === cnt.o + 1);
+            const winX = findWins(b, 'X');
+            const winO = findWins(b, 'O');
+            const both = winX.length > 0 && winO.length > 0;
+
+            let verdict = { text: '대기 중…', kind: null };
+
+            if (!cnt_ok) {
+                verdict = { text: 'no – 개수 제약 위반', kind: 'no' };
+            } else if (both) {
+                verdict = { text: 'no – X와 O 동시 승리 불가', kind: 'no' };
+            } else if (winX.length > 0) {
+                verdict = (cnt.x === cnt.o + 1)
+                    ? { text: 'yes – X 승리 & 턴 일치', kind: 'yes' }
+                    : { text: 'no – X 승리인데 턴 불일치(#X≠#O+1)', kind: 'no' };
+            } else if (winO.length > 0) {
+                verdict = (cnt.x === cnt.o)
+                    ? { text: 'yes – O 승리 & 턴 일치', kind: 'yes' }
+                    : { text: 'no – O 승리인데 턴 불일치(#X≠#O)', kind: 'no' };
+            } else {
+                verdict = { text: 'yes – 진행 중이거나 무승부 가능', kind: 'yes' };
+            }
+
+            return { cnt, cnt_ok, winX, winO, both, verdict };
+        }
+
+        function buildSteps() {
+            steps = [];
+            const b = boardValues();
+            snapshot = computeSummary(b);
+
+            // Step 0: 입력 검사 & 통계
+            steps.push({
+                focus: 'A',
+                run: () => {
+                    clearGridWins(); clearTreeActive(); markNode('A', 'active');
+                    const { x, o, d } = snapshot.cnt;
+                    logPush(`<strong>입력 로드</strong> – 허용 문자: <span class="kbd">X</span>/<span class="kbd">O</span>/<span class="kbd">.</span>`, 'warn');
+                    logPush(`<span class="k">개수</span> <span class="v">#X=${x}, #O=${o}, 빈칸=${d}</span>`);
+                    updateStats();
+                    setVerdict('대기 중…', null);
+                }
+            });
+
+            // Step 1: 개수 제약
+            steps.push({
+                focus: 'A',
+                run: () => {
+                    clearTreeActive(); markNode('A', snapshot.cnt_ok ? 'yes' : 'no');
+                    logPush(`<strong>[A] 개수 검사</strong> – <span class="kbd">#X==#O</span> 또는 <span class="kbd">#X==#O+1</span> ? → <strong>${snapshot.cnt_ok ? '참' : '거짓'}</strong>`, snapshot.cnt_ok ? 'good' : 'bad');
+                    if (!snapshot.cnt_ok) setVerdict('no – 개수 제약 위반', 'no');
+                }
+            });
+
+            // Step 2: 승리 라인 탐색
+            steps.push({
+                focus: 'B',
+                run: () => {
+                    clearTreeActive(); markNode('B', 'active');
+                    paintWinLines(snapshot.winX, snapshot.winO);
+                    if (snapshot.winX.length === 0 && snapshot.winO.length === 0) {
+                        logPush(`<strong>승리 라인</strong> – X: 없음, O: 없음`);
+                    } else {
+                        const fmt = (arr) => arr.map(i => `[${LINES[i].join(',')}]`).join(', ');
+                        if (snapshot.winX.length) logPush(`<strong>승리 라인</strong> – X: ${fmt(snapshot.winX)}`, 'good');
+                        if (snapshot.winO.length) logPush(`<strong>승리 라인</strong> – O: ${fmt(snapshot.winO)}`, 'good');
+                    }
+                }
+            });
+
+            // Step 3: 동시 승리 모순
+            steps.push({
+                focus: 'B',
+                run: () => {
+                    clearTreeActive(); markNode('B', snapshot.both ? 'no' : 'yes');
+                    logPush(`<strong>[B] 동시 승리?</strong> – winX && winO → <strong>${snapshot.both ? '참' : '거짓'}</strong>`, snapshot.both ? 'bad' : 'good');
+                    if (snapshot.both) setVerdict('no – X와 O 동시 승리 불가', 'no');
+                }
+            });
+
+            // Step 4: X 승리 시 턴 일치성
+            steps.push({
+                focus: 'C',
+                run: () => {
+                    clearTreeActive(); markNode('C', 'active');
+                    if (snapshot.winX.length > 0) {
+                        const ok = (snapshot.cnt.x === snapshot.cnt.o + 1);
+                        markNode('C', ok ? 'yes' : 'no');
+                        logPush(`<strong>[C] X 승리</strong> – 요구: #X==#O+1 → <strong>${ok ? '충족' : '불충족'}</strong>`, ok ? 'good' : 'bad');
+                        setVerdict(ok ? 'yes – X 승리 & 턴 일치' : 'no – X 승리인데 턴 불일치(#X≠#O+1)', ok ? 'yes' : 'no');
+                    } else {
+                        logPush(`<strong>[C] X 승리</strong> – 해당 없음`);
+                    }
+                }
+            });
+
+            // Step 5: O 승리 시 턴 일치성
+            steps.push({
+                focus: 'D',
+                run: () => {
+                    clearTreeActive(); markNode('D', 'active');
+                    if (snapshot.winO.length > 0) {
+                        const ok = (snapshot.cnt.x === snapshot.cnt.o);
+                        markNode('D', ok ? 'yes' : 'no');
+                        logPush(`<strong>[D] O 승리</strong> – 요구: #X==#O → <strong>${ok ? '충족' : '불충족'}</strong>`, ok ? 'good' : 'bad');
+                        setVerdict(ok ? 'yes – O 승리 & 턴 일치' : 'no – O 승리인데 턴 불일치(#X≠#O)', ok ? 'yes' : 'no');
+                    } else {
+                        logPush(`<strong>[D] O 승리</strong> – 해당 없음`);
+                    }
+                }
+            });
+
+            // Step 6: 둘 다 승리 아님 → yes 여부
+            steps.push({
+                focus: 'E',
+                run: () => {
+                    clearTreeActive(); markNode('E', 'active');
+                    if (snapshot.winX.length === 0 && snapshot.winO.length === 0 && snapshot.cnt_ok) {
+                        markNode('E', 'yes');
+                        logPush(`<strong>[E] 승자 없음</strong> – 개수조건 충족: 진행 중이거나 무승부 가능`, 'good');
+                        setVerdict('yes – 진행 중이거나 무승부 가능', 'yes');
+                    } else if (snapshot.winX.length === 0 && snapshot.winO.length === 0 && !snapshot.cnt_ok) {
+                        markNode('E', 'no');
+                        logPush(`<strong>[E] 승자 없음</strong> – 개수조건 불충족 → no`, 'bad');
+                        setVerdict('no – 개수 제약 위반', 'no');
+                    } else {
+                        logPush(`<strong>[E] 승자 없음</strong> – 해당 없음`);
+                    }
+                }
+            });
+        }
+
+        function stepNext() {
+            if (steps.length === 0) buildSteps();
+            if (stepIndex < steps.length - 1) {
+                stepIndex++;
+                steps[stepIndex].run();
+            }
+        }
+        function stepPrev() {
+            if (stepIndex <= -1) return;
+            // 간단히 전체 리플레이로 이전 상태 복원
+            const target = stepIndex - 1;
+            resetFlow(false);
+            buildSteps();
+            for (let i = 0; i <= target; i++) steps[i].run();
+            stepIndex = target;
+        }
+        function runAll() {
+            if (steps.length === 0) buildSteps();
+            while (stepIndex < steps.length - 1) stepNext();
+        }
+
+        /* ===== Controls ===== */
+        $('#nextBtn').addEventListener('click', stepNext);
+        $('#prevBtn').addEventListener('click', stepPrev);
+        $('#runBtn').addEventListener('click', runAll);
+        $('#resetBtn').addEventListener('click', () => resetFlow(true));
+
+        $('#ex1Btn').addEventListener('click', () => {
+            // 예시 1 (문제의 yes 케이스)
+            // X.O / OO. / XXX
+            loadBoard("X.OOO.XXX".replace(/\s/g, ''));
+            resetFlow(false);
+        });
+        $('#ex2Btn').addEventListener('click', () => {
+            // 예시 2 (문제의 no 케이스)
+            // O.X / XX. / OOO
+            loadBoard("O.XXX.OOO".replace(/\s/g, ''));
+            resetFlow(false);
+        });
+
+        function resetFlow(clearBoard) {
+            logReset(); clearTreeActive(); clearGridWins();
+            setVerdict('대기 중…', null);
+            steps = []; snapshot = null; stepIndex = -1;
+            if (clearBoard) {
+                loadBoard(".........");
+            }
+            updateStats();
+        }
+
+        /* ===== Init ===== */
+        loadBoard(".........");
+        updateStats();
+    </script>
+</body>
+
+</html>
