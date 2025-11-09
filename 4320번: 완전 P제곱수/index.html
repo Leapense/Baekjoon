@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>완전 P제곱수 — 실행 시각화</title>
+    <style>
+        :root {
+            --bg: #0e1116;
+            --panel: #151a21;
+            --ink: #e6edf3;
+            --muted: #9fb0c3;
+            --accent: #8ab4f8;
+            --ok: #8ff0a4;
+            --warn: #fbc02d;
+            --bad: #ff8a80;
+            --chip: #1f2630;
+            --border: #2c3440;
+            --hl: #223049;
+            --code: #0b0f14;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Arial, Apple Color Emoji, Segoe UI Emoji
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0 0 .5rem 0
+        }
+
+        h1 {
+            font-size: 1.6rem
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            color: var(--muted)
+        }
+
+        .app {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .controls textarea {
+            width: 100%;
+            height: 180px;
+            background: var(--code);
+            color: var(--ink);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace
+        }
+
+        .controls .row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px
+        }
+
+        button {
+            background: #1f2937;
+            color: var(--ink);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 10px;
+            cursor: pointer
+        }
+
+        button:hover {
+            background: #243142
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: not-allowed
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--chip);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-weight: 600
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px
+        }
+
+        .kv {
+            background: var(--chip);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px
+        }
+
+        .kv .k {
+            font-size: .78rem;
+            color: var(--muted)
+        }
+
+        .kv .v {
+            font: 600 1.05rem/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        .table th,
+        .table td {
+            padding: 6px 8px;
+            border-bottom: 1px dashed var(--border);
+            text-align: left
+        }
+
+        .table th {
+            color: var(--muted);
+            font-weight: 600
+        }
+
+        .log {
+            height: 240px;
+            overflow: auto;
+            background: var(--code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px
+        }
+
+        .log .item {
+            padding: 6px 8px;
+            border-radius: 8px
+        }
+
+        .log .item:nth-child(odd) {
+            background: #0f141b
+        }
+
+        .log .item .t {
+            color: var(--muted);
+            font-size: .78rem
+        }
+
+        .log .item .m {
+            white-space: pre-wrap
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .progress {
+            height: 8px;
+            background: #0b0f14;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            overflow: hidden
+        }
+
+        .progress>span {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #58a6ff)
+        }
+
+        .tree {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .node {
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--hl);
+            font-family: ui-monospace;
+            font-weight: 600
+        }
+
+        .arrow {
+            align-self: center;
+            opacity: .6
+        }
+
+        .output {
+            min-height: 46px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            padding: 8px;
+            font-family: ui-monospace
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #112030
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .hint {
+            font-size: .9rem;
+            color: var(--muted)
+        }
+
+        .mini {
+            font-size: .85rem
+        }
+
+        .sep {
+            height: 1px;
+            background: var(--border);
+            margin: 10px 0
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: #112030
+        }
+
+        .footer {
+            opacity: .7;
+            margin-top: 8px
+        }
+
+        .hl {
+            color: var(--accent)
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <div class="panel controls">
+            <h1>완전 P제곱수 — 실행 시각화</h1>
+            <p class="hint">입력(여러 줄). <span class="muted">0을 만나면 종료합니다.</span></p>
+            <textarea id="input"></textarea>
+            <div class="row">
+                <button id="runAll">실행(한 번에)</button>
+                <button id="buildSteps">단계 생성</button>
+                <button id="prev" disabled>이전 단계</button>
+                <button id="next" disabled>다음 단계</button>
+                <button id="auto" disabled>자동 재생</button>
+                <label class="row mini">속도(ms)
+                    <input id="speed" type="number" value="500" min="50" step="50"
+                        style="width:90px;background:var(--code);color:var(--ink);border:1px solid var(--border);border-radius:8px;padding:6px 8px">
+                </label>
+            </div>
+            <div class="sep"></div>
+            <div class="row mini">
+                <span class="chip" id="primeInfo">소수 테이블: 준비 안 됨</span>
+                <span class="chip" id="stepInfo">단계: 0 / 0</span>
+            </div>
+            <p class="footer mini">알고리즘: |x| 소인수분해 → 지수들의 GCD → x<0이면 결과를 홀수로 보정.</p>
+        </div>
+
+        <div class="panel vis">
+            <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+                <div class="row" style="gap:8px">
+                    <span class="badge">현재 단계</span>
+                    <span id="curStepTitle" class="hl"></span>
+                </div>
+                <div class="row" style="gap:8px">
+                    <span class="badge">현재 테스트케이스</span>
+                    <span id="caseBadge" class="pill">-</span>
+                </div>
+            </div>
+
+            <div class="grid" style="margin-top:10px">
+                <div class="kv">
+                    <div class="k">입력 x</div>
+                    <div class="v" id="kv_x">-</div>
+                </div>
+                <div class="kv">
+                    <div class="k">부호(neg)</div>
+                    <div class="v" id="kv_neg">-</div>
+                </div>
+                <div class="kv">
+                    <div class="k">절댓값 n=|x|</div>
+                    <div class="v" id="kv_n">-</div>
+                </div>
+                <div class="kv">
+                    <div class="k">작업값 m</div>
+                    <div class="v" id="kv_m">-</div>
+                </div>
+                <div class="kv">
+                    <div class="k">현재 소수 p</div>
+                    <div class="v" id="kv_p">-</div>
+                </div>
+                <div class="kv">
+                    <div class="k">지수들의 GCD g</div>
+                    <div class="v" id="kv_g">-</div>
+                </div>
+            </div>
+
+            <div class="cards" style="margin-top:12px">
+                <div class="panel" style="padding:10px">
+                    <h2>소인수분해 결과 (누적)</h2>
+                    <table class="table mono" id="factorTable">
+                        <thead>
+                            <tr>
+                                <th>소인수</th>
+                                <th>지수 e</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="panel" style="padding:10px">
+                    <h2>나눗셈 경로 트리</h2>
+                    <div class="tree" id="tree"></div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top:12px;padding:10px">
+                <h2>출력 결과</h2>
+                <div id="output" class="output"></div>
+            </div>
+
+            <div class="panel" style="margin-top:12px;padding:10px">
+                <h2>실행 로그</h2>
+                <div class="log" id="log"></div>
+                <div class="row" style="margin-top:8px">
+                    <div class="progress" style="flex:1"><span id="prog" style="width:0%"></span></div>
+                    <span class="mini muted" id="progText" style="min-width:70px;text-align:right">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const input = document.getElementById('input');
+            const runAllBtn = document.getElementById('runAll');
+            const buildStepsBtn = document.getElementById('buildSteps');
+            const prevBtn = document.getElementById('prev');
+            const nextBtn = document.getElementById('next');
+            const autoBtn = document.getElementById('auto');
+            const speed = document.getElementById('speed');
+
+            const primeInfo = document.getElementById('primeInfo');
+            const stepInfo = document.getElementById('stepInfo');
+            const curStepTitle = document.getElementById('curStepTitle');
+            const caseBadge = document.getElementById('caseBadge');
+
+            const kv_x = document.getElementById('kv_x');
+            const kv_neg = document.getElementById('kv_neg');
+            const kv_n = document.getElementById('kv_n');
+            const kv_m = document.getElementById('kv_m');
+            const kv_p = document.getElementById('kv_p');
+            const kv_g = document.getElementById('kv_g');
+
+            const factorTableBody = document.querySelector('#factorTable tbody');
+            const tree = document.getElementById('tree');
+            const logBox = document.getElementById('log');
+            const outputBox = document.getElementById('output');
+            const prog = document.getElementById('prog');
+            const progText = document.getElementById('progText');
+
+            // 초기 샘플 입력
+            input.value = [
+                '17',
+                '1073741824',
+                '25',
+                '0'
+            ].join('\n');
+
+            // 유틸리티
+            const gcd = (a, b) => { a = Math.abs(a | 0); b = Math.abs(b | 0); while (b) { const t = a % b; a = b; b = t; } return a; };
+            const clone = (o) => JSON.parse(JSON.stringify(o));
+
+            // 소수 생성: 에라토스테네스
+            let PRIMES = null;
+            function sieve(limit) {
+                const mark = new Uint8Array(limit + 1);
+                const ps = [];
+                for (let i = 2; i * i <= limit; i++) if (!mark[i]) for (let j = i * i; j <= limit; j += i) mark[j] = 1;
+                for (let i = 2; i <= limit; i++) if (!mark[i]) ps.push(i);
+                return ps;
+            }
+            function ensurePrimes() {
+                if (!PRIMES) {
+                    PRIMES = sieve(46340);
+                    primeInfo.textContent = `소수 테이블: ${PRIMES.length.toLocaleString()}개 (최대 46340)`;
+                }
+            }
+
+            // 단계 레코드 빌더
+            let STEPS = []; // {title, msg, snap}
+            let CUR = -1;   // 현재 단계 인덱스
+            let autoTimer = null;
+
+            function buildStepsFromInput() {
+                ensurePrimes();
+                STEPS = [];
+
+                const lines = input.value.split(/\r?\n/).map(s => s.trim()).filter(s => s.length > 0);
+                let outputs = [];
+
+                // 스냅샷 기본 상태 생성기
+                const baseSnap = () => ({
+                    caseIdx: -1, x: null, neg: false, n: null, m: null, g: 0, p: null,
+                    factors: [], // [ [prime, e], ... ]
+                    tree: [],    // 연속 나눗셈 경로: [m0, m1, m2, ...]
+                    out: clone(outputs)
+                });
+
+                // 공통: 단계 추가
+                const push = (title, msg, snap) => {
+                    STEPS.push({ title, msg, snap: clone(snap) });
+                };
+
+                let snap = baseSnap();
+
+                push('소수 테이블 준비', '에라토스테네스의 체로 46340까지 소수 생성 완료.', snap);
+
+                outer: for (let li = 0; li < lines.length; li++) {
+                    const sx = lines[li];
+                    const x = Number(sx);
+                    if (!Number.isFinite(x)) continue; // 방어
+                    if (x === 0) { push('입력 0 발견', '0을 만나 처리 종료.', snap); break outer; }
+
+                    // 초기화
+                    snap = baseSnap();
+                    snap.caseIdx = (snap.caseIdx | 0) + (outputs.length + 1);
+                    snap.x = x;
+                    snap.neg = x < 0;
+                    snap.n = Math.abs(x);
+                    snap.m = snap.n;
+                    snap.g = 0;
+                    snap.p = null;
+                    snap.tree = [snap.m];
+                    push(`케이스 시작 #${outputs.length + 1}`, `입력 x=${x}. neg=${snap.neg}. n=|x|=${snap.n}.`, snap);
+
+                    // 소인수분해 루프 (p*p <= m)
+                    let skipped = 0;
+                    for (let i = 0; i < PRIMES.length; i++) {
+                        const p = PRIMES[i];
+                        if (p * p > snap.m) break;
+                        if (snap.m % p !== 0) { skipped++; continue; }
+
+                        if (skipped) {
+                            push('소수 건너뜀', `${skipped}개의 소수(p)에서 나누어지지 않음.`, snap);
+                            skipped = 0;
+                        }
+                        snap.p = p;
+                        push('약수 발견', `p=${p} 가 m을 나눔. 지수 e를 셉니다.`, snap);
+
+                        // e 카운트 및 m 나눔
+                        let e = 0;
+                        const path = [snap.m];
+                        while (snap.m % p === 0) {
+                            snap.m = Math.floor(snap.m / p);
+                            e++;
+                            path.push(snap.m);
+                            snap.tree = path.slice();
+                            push('나눗셈', `m ← m / ${p} = ${snap.m} (누적 e=${e})`, snap);
+                        }
+                        // 팩터 기록
+                        snap.factors.push([p, e]);
+                        const oldg = snap.g;
+                        snap.g = (snap.g === 0) ? e : gcd(snap.g, e);
+                        push('GCD 갱신', `g ← gcd(${oldg || e}, ${e}) = ${snap.g}`, snap);
+                    }
+                    if (skipped) {
+                        push('소수 건너뜀', `${skipped}개의 소수(p)에서 나누어지지 않음.`, snap);
+                        skipped = 0;
+                    }
+
+                    // 남은 소인수(m>1) → 지수 1
+                    if (snap.m > 1) {
+                        snap.factors.push([snap.m, 1]);
+                        const oldg = snap.g;
+                        snap.g = (snap.g === 0) ? 1 : gcd(snap.g, 1);
+                        push('잔여 소인수', `마지막 소인수 ${snap.m}^1. g ← gcd(${oldg || 1}, 1) = ${snap.g}`, snap);
+                    }
+
+                    // 음수 보정: g가 짝수면 2로 나눠 홀수화
+                    if (snap.neg) {
+                        if (snap.g === 0) {
+                            // 이 경우는 이론상 없음(최소 지수는 1)
+                            push('음수 보정', 'g가 0인 특수상황(비현실).', snap);
+                        } else if (snap.g % 2 === 0) {
+                            while (snap.g % 2 === 0) {
+                                const oldg = snap.g;
+                                snap.g = snap.g >> 1;
+                                push('음수 보정', `x<0 → 짝수 지수 불가. g ← ${oldg}/2 = ${snap.g}`, snap);
+                            }
+                        } else {
+                            push('음수 보정', 'x<0 이지만 g가 이미 홀수 → 변경 없음.', snap);
+                        }
+                    }
+
+                    // 결과 출력
+                    outputs.push(snap.g);
+                    snap.out = clone(outputs);
+                    push('출력', `최대 p = ${snap.g}`, snap);
+                }
+
+                // 단계 정보 표시
+                CUR = -1;
+                stepInfo.textContent = `단계: 0 / ${STEPS.length}`;
+                enableStepControls(STEPS.length > 0);
+                if (STEPS.length > 0) applyStep(0);
+            }
+
+            function enableStepControls(enabled) {
+                prevBtn.disabled = nextBtn.disabled = autoBtn.disabled = !enabled;
+            }
+
+            function applyStep(idx) {
+                if (idx < 0 || idx >= STEPS.length) return;
+                CUR = idx;
+                const st = STEPS[idx];
+                const s = st.snap;
+
+                // 헤더
+                curStepTitle.textContent = st.title;
+                caseBadge.textContent = (s.x == null ? '-' : `#${(s.caseIdx >= 0 ? (s.caseIdx + 1) : '-')}: x=${s.x}`);
+
+                // 상태 카드
+                kv_x.textContent = (s.x == null ? '-' : s.x);
+                kv_neg.textContent = (s.x == null ? '-' : String(s.neg));
+                kv_n.textContent = (s.n == null ? '-' : s.n);
+                kv_m.textContent = (s.m == null ? '-' : s.m);
+                kv_p.textContent = (s.p == null ? '-' : s.p);
+                kv_g.textContent = (s.g == null ? '-' : s.g);
+
+                // 팩터 테이블
+                factorTableBody.innerHTML = '';
+                for (const [p, e] of s.factors) {
+                    const tr = document.createElement('tr');
+                    const td1 = document.createElement('td'); td1.textContent = String(p);
+                    const td2 = document.createElement('td'); td2.textContent = String(e);
+                    tr.append(td1, td2);
+                    factorTableBody.appendChild(tr);
+                }
+
+                // 트리 (연속 나눗셈 경로)
+                tree.innerHTML = '';
+                const path = s.tree || [];
+                for (let i = 0; i < path.length; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'node';
+                    div.textContent = path[i];
+                    tree.appendChild(div);
+                    if (i < path.length - 1) {
+                        const arrow = document.createElement('div');
+                        arrow.className = 'arrow';
+                        arrow.textContent = '→';
+                        tree.appendChild(arrow);
+                    }
+                }
+
+                // 로그 (누적 표시)
+                logBox.innerHTML = '';
+                for (let i = 0; i <= idx; i++) {
+                    const it = STEPS[i];
+                    const row = document.createElement('div');
+                    row.className = 'item';
+                    const t = document.createElement('div'); t.className = 't'; t.textContent = `[${i + 1}/${STEPS.length}] ${it.title}`;
+                    const m = document.createElement('div'); m.className = 'm'; m.textContent = it.msg;
+                    row.append(t, m);
+                    logBox.appendChild(row);
+                }
+                logBox.scrollTop = logBox.scrollHeight;
+
+                // 출력
+                outputBox.textContent = (s.out && s.out.length) ? s.out.join('\n') : '';
+
+                // 프로그레스
+                const ratio = Math.round(((idx + 1) / STEPS.length) * 100);
+                prog.style.width = ratio + "%";
+                progText.textContent = ratio + "%";
+
+                // 단계 정보 텍스트 갱신
+                stepInfo.textContent = `단계: ${idx + 1} / ${STEPS.length}`;
+
+                // 버튼 상태
+                prevBtn.disabled = (idx <= 0);
+                nextBtn.disabled = (idx >= STEPS.length - 1);
+            }
+
+            function next() { if (CUR < STEPS.length - 1) applyStep(CUR + 1); }
+            function prev() { if (CUR > 0) applyStep(CUR - 1); }
+
+            function runAuto() {
+                if (autoTimer) { clearInterval(autoTimer); autoTimer = null; autoBtn.textContent = '자동 재생'; return; }
+                autoBtn.textContent = '정지';
+                autoTimer = setInterval(() => {
+                    if (CUR >= STEPS.length - 1) { clearInterval(autoTimer); autoTimer = null; autoBtn.textContent = '자동 재생'; return; }
+                    next();
+                }, Math.max(50, Number(speed.value) | 0));
+            }
+
+            function runAll() {
+                // 실제 Java 코드와 동일 로직으로 전체 결과만 산출
+                ensurePrimes();
+                const lines = input.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+                const out = [];
+                for (const sx of lines) {
+                    const x = Number(sx);
+                    if (!Number.isFinite(x)) continue;
+                    if (x === 0) break;
+                    let neg = x < 0; let n = Math.abs(x); let m = n; let g = 0;
+                    for (const p of PRIMES) {
+                        if (p * p > m) break;
+                        if (m % p !== 0) continue;
+                        let e = 0; while (m % p === 0) { m = Math.floor(m / p); e++; }
+                        g = (g === 0) ? e : gcd(g, e);
+                    }
+                    if (m > 1) { g = (g === 0) ? 1 : gcd(g, 1); }
+                    if (neg) { while (g % 2 === 0) g >>= 1; }
+                    out.push(String(g));
+                }
+                outputBox.textContent = out.join('\n');
+                // 시각 영역 초기화
+                STEPS = []; CUR = -1; stepInfo.textContent = '단계: 0 / 0'; curStepTitle.textContent = ''; caseBadge.textContent = '-';
+                factorTableBody.innerHTML = ''; tree.innerHTML = ''; logBox.innerHTML = '';
+                kv_x.textContent = kv_neg.textContent = kv_n.textContent = kv_m.textContent = kv_p.textContent = kv_g.textContent = '-';
+                prog.style.width = '0%'; progText.textContent = '0%';
+                enableStepControls(false);
+            }
+
+            // 이벤트 바인딩
+            buildStepsBtn.addEventListener('click', buildStepsFromInput);
+            nextBtn.addEventListener('click', next);
+            prevBtn.addEventListener('click', prev);
+            autoBtn.addEventListener('click', runAuto);
+            runAllBtn.addEventListener('click', runAll);
+
+            // 시작 시 primes 준비
+            ensurePrimes();
+        })();
+    </script>
+</body>
+
+</html>
