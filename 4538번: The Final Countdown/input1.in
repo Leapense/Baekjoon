@@ -1,0 +1,9 @@
+2
+3
+30 START
+15 HOLD 5
+10 HOLD 5 IF fantasticfour
+3
+75 HOLD 20 IF yellowlightblinks
+150 HOLD 30 IF NOT fueled
+300 START
