@@ -10,7 +10,7 @@ fi
 
 for input_file in *.in; do
     start=$(date +%s%N)
-    "$TIME_CMD" -f "%M" -o "$MEM_TMP" python3 main.py < "$input_file"
+    "$TIME_CMD" -f "%M" -o "$MEM_TMP" ./main < "$input_file"
     end=$(date +%s%N)
     duration=$(( (end - start) / 1000000 ))
     mem_kb=$(<"$MEM_TMP")
