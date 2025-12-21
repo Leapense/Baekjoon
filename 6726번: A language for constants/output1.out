@@ -1,0 +1,22 @@
+Constant 3
+C+1
+DBL
+INCR
+
+Constant -5
+C-1
+DBL
+DBL
+INCR
+DBL
+INCR
+
+Constant 1
+C+1
+
+Constant 7
+C+1
+DBL
+INCR
+DBL
+INCR
