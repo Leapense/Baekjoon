@@ -1,0 +1,30 @@
+2
+10
+Team1
+Team2
+Team3
+Team4
+Team5
+Team6
+Team7
+Team8
+Team9
+slowTeam
+8 14
+1 18 Yes Team4
+1 57 Yes Team2
+1 87 Yes Team3
+1 101 Yes Team1
+2 103 Yes Team5
+2 120 Yes Team6
+6 141 Yes Team7
+1 147 No Team1
+7 156 Yes Team2
+5 167 Yes Team8
+2 167 Yes Team9
+5 170 No Team4
+5 175 Yes Team4
+1 234 No slowTeam
+1
+Team1
+8 0
