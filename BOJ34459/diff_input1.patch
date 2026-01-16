@@ -1,0 +1,9 @@
+--- output1.out	2026-01-16 18:16:39.695366206 +0900
++++ /tmp/tmp.TPiYkMpu9w	2026-01-16 18:40:02.143855359 +0900
+@@ -2,4 +2,4 @@
+ MIT time
+ MIT^2 time
+ MIT^4 time
+-MIT time
+\ No newline at end of file
++MIT time

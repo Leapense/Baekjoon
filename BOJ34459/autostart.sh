@@ -5,15 +5,15 @@ shopt -s nullglob
 # 실행 커맨드 설정 (원하는 언어에 맞게 하나만 선택)
 ###############################################################################
 # C/C++ (컴파일된 바이너리):
-RUN_CMD=(./main)
+# RUN_CMD=(./main)
 
 # Python:
 # python3 -W ignore -c "import py_compile; py_compile.compile(r'main.py')"
 # RUN_CMD=(python3 -W ignore main.py)
 
 # Java (예: Main 클래스):
-# javac --release 15 -J-Xms1024m -J-Xmx1920m -J-Xss512m -encoding UTF-8 Main.java
-# RUN_CMD=(java -Xms1024m -Xmx1920m -Xss512m -Dfile.encoding=UTF-8 -XX:+UseSerialGC Main)
+javac --release 15 -J-Xms1024m -J-Xmx1920m -J-Xss512m -encoding UTF-8 Main.java
+RUN_CMD=(java -Xms1024m -Xmx1920m -Xss512m -Dfile.encoding=UTF-8 -XX:+UseSerialGC Main)
 
 # node.js
 # RUN_CMD=(node --stack-size=65536 main.js)
