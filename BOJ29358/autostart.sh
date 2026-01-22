@@ -5,7 +5,7 @@ shopt -s nullglob
 # 실행 커맨드 설정 (원하는 언어에 맞게 하나만 선택)
 ###############################################################################
 # C/C++ (컴파일된 바이너리):
-# RUN_CMD=(./main)
+RUN_CMD=(./main)
 
 # Python:
 # python3 -W ignore -c "import py_compile; py_compile.compile(r'main.py')"
@@ -16,7 +16,7 @@ shopt -s nullglob
 # RUN_CMD=(java -Xms1024m -Xmx1920m -Xss512m -Dfile.encoding=UTF-8 -XX:+UseSerialGC Main)
 
 # node.js
-RUN_CMD=(node --stack-size=65536 main.js)
+# RUN_CMD=(node --stack-size=65536 main.js)
 
 ###############################################################################
 # 기대 출력 파일 매핑 규칙
