@@ -28,7 +28,7 @@
 /* ========== Variables ========== */
 /* Fallback font family. Nerd fonts include icon glyphs used by many themes. */
 :root {
-  --vscode-custom-font: "Apple SD Gothic Neo", "SF Pro Display","MesloLGS NF", "Fira Code Nerd Font", "Fira Code", monospace;
+  --vscode-custom-font: "Helvetica", "Apple SD Gothic Neo", "SF Pro Display","MesloLGS NF", "Fira Code Nerd Font", "Fira Code", monospace;
   /* Neon accent colours */
   --accent-green: #03edf9;
   --accent-pink: #fc28a8;
