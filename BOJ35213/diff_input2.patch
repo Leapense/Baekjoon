@@ -1,0 +1,9 @@
+--- output2.out	2026-02-04 19:22:12.281565917 +0900
++++ /tmp/tmp.dKBT2GW3tM	2026-02-04 19:38:12.381092845 +0900
+@@ -1,2 +1,2 @@
+-3
+-2025 -2369 1709
+\ No newline at end of file
++5
++1 1 2 2 3
+\ No newline at end of file
