@@ -1,0 +1,7 @@
+--- output2.out	2026-02-09 11:32:00.626543867 +0900
++++ /tmp/tmp.FINedeDNPa	2026-02-09 11:54:09.873397894 +0900
+@@ -1 +1 @@
+-531.0 660.0
+\ No newline at end of file
++531.00 660.00
+\ No newline at end of file
