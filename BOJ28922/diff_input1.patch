@@ -1,0 +1,15 @@
+--- output1.out	2026-02-11 18:39:32.432761833 +0900
++++ /tmp/tmp.aVyWJtJTDK	2026-02-11 18:48:53.742223110 +0900
+@@ -1,7 +1,7 @@
+ Move
+-Reverse
+ Move
+-Up 4
+-Reverse
+ Move
+-Finish
+\ No newline at end of file
++Move
++Move
++Move
++Move
