@@ -1,0 +1,291 @@
+/*=====================================================
+  ✨ VSCode Custom CSS - Aesthetic Overhaul
+  =====================================================*/
+
+/* ─────────────── FONT SMOOTHING ─────────────── */
+* {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* ─────────────── GLOBAL TRANSITIONS ─────────────── */
+/* Smooth transitions on interactive elements */
+.monaco-workbench .part,
+.monaco-workbench .panel,
+.monaco-list-row,
+.tab,
+.action-item,
+.menubar-menu-button {
+  transition: background-color 0.15s ease,
+              opacity 0.15s ease,
+              transform 0.15s ease !important;
+}
+
+/* ─────────────── TITLE BAR ─────────────── */
+.titlebar-container {
+  background: transparent !important;
+}
+
+.window-title {
+  font-size: 12px !important;
+  opacity: 0.6 !important;
+  font-weight: 400 !important;
+}
+
+/* ─────────────── ACTIVITY BAR (Left Icon Bar) ─────────────── */
+.activitybar .action-item .action-label {
+  transition: transform 0.2s ease !important;
+}
+
+.activitybar .action-item:hover .action-label {
+  transform: scale(1.15) !important;
+}
+
+.activitybar .active-item-indicator {
+  border-radius: 8px !important;
+}
+
+/* ─────────────── SIDEBAR ─────────────── */
+/* Frosted glass effect */
+.sidebar,
+.auxiliarybar {
+  background-color: rgba(30, 30, 30, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Tree item hover effect */
+.monaco-list .monaco-list-row:hover {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border-radius: 4px !important;
+}
+
+/* ─────────────── TABS ─────────────── */
+.tab {
+  border-radius: 8px 8px 0 0 !important;
+  margin-top: 2px !important;
+  margin-left: 2px !important;
+  border: none !important;
+  height: 36px !important;
+  line-height: 36px !important;
+}
+
+.tab.active {
+  background: rgba(255, 255, 255, 0.06) !important;
+  font-weight: 500 !important;
+}
+
+.tabs-container {
+  padding-top: 2px !important;
+}
+
+/* Remove thick active tab border, use subtle bottom glow */
+.tab.active::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 15% !important;
+  width: 70% !important;
+  height: 2px !important;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(100, 160, 255, 0.8),
+    transparent
+  ) !important;
+  border-radius: 2px !important;
+}
+
+/* ─────────────── EDITOR ─────────────── */
+/* Cursor glow effect */
+.cursor {
+  background: linear-gradient(
+    180deg,
+    rgba(100, 180, 255, 0.9),
+    rgba(130, 100, 255, 0.9)
+  ) !important;
+  box-shadow: 0 0 8px rgba(100, 160, 255, 0.5),
+              0 0 16px rgba(100, 160, 255, 0.2) !important;
+  border-radius: 2px !important;
+  width: 2.5px !important;
+}
+
+/* Current line highlight - softer */
+.current-line {
+  border: none !important;
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  border-radius: 2px !important;
+}
+
+/* Selection highlight */
+.selected-text {
+  background-color: rgba(100, 160, 255, 0.15) !important;
+  border-radius: 3px !important;
+}
+
+/* Line numbers */
+.line-numbers {
+  opacity: 0.35 !important;
+  transition: opacity 0.2s ease !important;
+  font-size: 0.95em !important;
+}
+
+.line-numbers.active-line-number {
+  opacity: 1 !important;
+  font-weight: 600 !important;
+  color: rgba(130, 180, 255, 0.9) !important;
+}
+
+/* ─────────────── SCROLLBAR ─────────────── */
+/* Thin, minimal scrollbar */
+.slider {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  transition: background 0.2s ease, width 0.2s ease !important;
+}
+
+.slider:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* Invisible scrollbar track */
+.scrollbar {
+  background: transparent !important;
+}
+
+/* Vertical scrollbar width */
+.invisible.scrollbar.vertical .slider {
+  width: 6px !important;
+  min-width: 6px !important;
+}
+
+/* ─────────────── MINIMAP ─────────────── */
+.minimap {
+  opacity: 0.4 !important;
+  transition: opacity 0.3s ease !important;
+}
+
+.minimap:hover {
+  opacity: 0.8 !important;
+}
+
+/* ─────────────── PANEL (Terminal, Output, etc.) ─────────────── */
+.panel {
+  background-color: rgba(20, 20, 25, 0.9) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Terminal cursor glow */
+.terminal .xterm-cursor-layer .xterm-cursor {
+  box-shadow: 0 0 6px rgba(100, 255, 180, 0.5) !important;
+}
+
+/* ─────────────── COMMAND PALETTE ─────────────── */
+.quick-input-widget {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+              0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(16px) !important;
+  top: 15% !important;
+}
+
+.quick-input-header {
+  padding: 8px 12px !important;
+}
+
+.quick-input-widget .monaco-inputbox {
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+}
+
+/* Command palette list items */
+.quick-input-list .monaco-list-row {
+  border-radius: 6px !important;
+  margin: 1px 6px !important;
+  padding: 0 6px !important;
+}
+
+/* ─────────────── TOOLTIPS / HOVER WIDGETS ─────────────── */
+.monaco-hover {
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* ─────────────── SUGGEST WIDGET (Autocomplete) ─────────────── */
+.editor-widget.suggest-widget {
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+.suggest-widget .monaco-list-row {
+  border-radius: 4px !important;
+}
+
+/* ─────────────── NOTIFICATIONS ─────────────── */
+.notifications-center,
+.notification-toast {
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ─────────────── BREADCRUMBS ─────────────── */
+.breadcrumbs-below-tabs {
+  opacity: 0.6 !important;
+  font-size: 0.9em !important;
+  transition: opacity 0.2s ease !important;
+  padding-left: 12px !important;
+}
+
+.breadcrumbs-below-tabs:hover {
+  opacity: 1 !important;
+}
+
+/* ─────────────── EDITOR GROUPS BORDER ─────────────── */
+.editor-group-container .editor-group-letter {
+  border-radius: 4px !important;
+}
+
+/* ─────────────── BADGES ─────────────── */
+.badge .badge-content {
+  border-radius: 10px !important;
+  font-size: 10px !important;
+  padding: 2px 5px !important;
+}
+
+/* ─────────────── BUTTONS ─────────────── */
+.monaco-button {
+  border-radius: 6px !important;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.monaco-button:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ─────────────── FIND WIDGET ─────────────── */
+.find-widget {
+  border-radius: 0 0 10px 10px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  overflow: hidden !important;
+}
+
+/* ─────────────── INDENT GUIDES ─────────────── */
+.view-overlays .cigr {
+  opacity: 0.5 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+/* ─────────────── STATUS BAR ─────────────── */
+.statusbar {
+  font-size: 11.5px !important;
+}
+
+.statusbar .statusbar-item a {
+  border-radius: 4px !important;
+  transition: background-color 0.15s ease !important;
+}
