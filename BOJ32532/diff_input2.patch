@@ -1,0 +1,9 @@
+--- output2.out	2026-02-20 22:31:24.557231257 +0900
++++ /tmp/tmp.ZzbLqBnxhV	2026-02-20 22:38:54.587921986 +0900
+@@ -1,4 +1,4 @@
+ Ime: Pajo
+ Prezime: Patak
+ Datum rodjenja: 04-03-1998
+-OIB: 12345678901
+\ No newline at end of file
++OIB: 12345678901
