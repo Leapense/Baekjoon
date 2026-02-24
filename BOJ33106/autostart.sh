@@ -2,25 +2,6 @@
 shopt -s nullglob
 
 ###############################################################################
-# 설정 및 인자 파싱 (Time Limit, Memory Limit)
-###############################################################################
-TIME_LIMIT_MS=""
-MEMORY_LIMIT_MB=""
-
-# -t: 시간 제한 (ms 단위), -m: 메모리 제한 (MB 단위)
-while getopts "t:m:h" opt; do
-  case "$opt" in
-    t) TIME_LIMIT_MS="$OPTARG" ;;
-    m) MEMORY_LIMIT_MB="$OPTARG" ;;
-    h|*) 
-      echo "Usage: $0 [-t time_limit_ms] [-m memory_limit_mb]"
-      exit 1
-      ;;
-  esac
-done
-shift "$((OPTIND -1))"
-
-###############################################################################
 # 실행 커맨드 설정 (원하는 언어에 맞게 하나만 선택)
 ###############################################################################
 # C/C++ (컴파일된 바이너리):
@@ -31,11 +12,11 @@ shift "$((OPTIND -1))"
 # RUN_CMD=(python3 -W ignore main.py)
 
 # Java (예: Main 클래스):
-# javac --release 15 -J-Xms1024m -J-Xmx1920m -J-Xss512m -encoding UTF-8 Main.java
-# RUN_CMD=(java -Xms1024m -Xmx1920m -Xss512m -Dfile.encoding=UTF-8 -XX:+UseSerialGC Main)
+javac --release 15 -J-Xms1024m -J-Xmx1920m -J-Xss512m -encoding UTF-8 Main.java
+RUN_CMD=(java -Xms1024m -Xmx1920m -Xss512m -Dfile.encoding=UTF-8 -XX:+UseSerialGC Main)
 
 # node.js
-RUN_CMD=(node --stack-size=65536 main.js)
+# RUN_CMD=(node --stack-size=65536 main.js)
 
 # 색상 사용 여부: stdout이 터미널이고, NO_COLOR가 없을 때만 활성화
 USE_COLOR=0
@@ -76,6 +57,8 @@ print_result_line() {
 
 ###############################################################################
 # 기대 출력 파일 매핑 규칙
+# 1) input_file이 "foo.in" 이면 기본적으로 "foo.out"을 찾음
+# 2) 없으면 foo 끝의 숫자를 추출해서 "output<숫자>.out"을 찾음 (예: input1.in -> output1.out)
 ###############################################################################
 find_expected() {
   local input="$1"
@@ -102,7 +85,7 @@ to_leetcode_value() {
 import sys, json
 
 text = sys.stdin.read()
-text = text.rstrip("\r\n")
+text = text.rstrip("\r\n")  # CRLF/ LF 모두 처리
 
 if text == "":
     print("[]")
@@ -110,6 +93,7 @@ if text == "":
 
 lines = text.splitlines()
 
+# 단일 라인이면 JSON 파싱 시도
 if len(lines) == 1:
     s = lines[0].strip()
     try:
@@ -119,25 +103,20 @@ if len(lines) == 1:
     except Exception:
         pass
 
+# 여러 줄이거나 JSON이 아니면 "줄 배열"로 표시
 arr = [ln.rstrip("\r\n") for ln in lines]
 print(json.dumps(arr, ensure_ascii=False))
 '
 }
 
 ###############################################################################
-# time(1) 설정 및 timeout 설정
+# time(1) 설정: GNU time이면 %M(최대 RSS, KB) 사용
+# macOS/BSD time이면 -l 출력에서 maximum resident set size(bytes) 파싱
 ###############################################################################
 TIME_CMD="/usr/bin/time"
 HAS_GNU_TIME=0
 if "$TIME_CMD" --version >/dev/null 2>&1; then
   HAS_GNU_TIME=1
-fi
-
-TIMEOUT_CMD=()
-if [[ -n "$TIME_LIMIT_MS" ]]; then
-  # timeout 명령어는 초 단위를 받으므로 ms를 초로 변환 (예: 1500 -> 1.5)
-  TIMEOUT_SEC=$(awk -v ms="$TIME_LIMIT_MS" 'BEGIN { printf "%.3f", ms/1000 }')
-  TIMEOUT_CMD=("timeout" "${TIMEOUT_SEC}s")
 fi
 
 accepted=0
@@ -165,15 +144,16 @@ for input_file in *.in; do
 
   start_ns="$(date +%s%N)"
 
-  # 실행 + 메모리 측정 (timeout이 설정되어 있다면 적용)
+# 실행 + 메모리 측정 (stdout은 out_tmp로)
   exit_code=0
   if [[ "$HAS_GNU_TIME" -eq 1 ]]; then
-    "$TIME_CMD" -f "%M" -o "$mem_tmp" "${TIMEOUT_CMD[@]}" "${RUN_CMD[@]}" < "$input_file" > "$out_tmp" || exit_code=$?
+    "$TIME_CMD" -f "%M" -o "$mem_tmp" "${RUN_CMD[@]}" < "$input_file" > "$out_tmp" || exit_code=$?
     mem_kb="$(cat "$mem_tmp" 2>/dev/null || true)"
     mem_mb=""
     [[ -n "${mem_kb:-}" ]] && mem_mb="$(( mem_kb / 1024 ))"
   else
-    "$TIME_CMD" -l "${TIMEOUT_CMD[@]}" "${RUN_CMD[@]}" < "$input_file" > "$out_tmp" 2> "$mem_tmp" || exit_code=$?
+    # macOS/BSD: -l은 stderr로 메모리 정보 출력
+    "$TIME_CMD" -l "${RUN_CMD[@]}" < "$input_file" > "$out_tmp" 2> "$mem_tmp" || exit_code=$?
     mem_bytes="$(awk '/maximum resident set size/ {print $1; exit}' "$mem_tmp" 2>/dev/null || true)"
     mem_kb=""
     mem_mb=""
@@ -188,27 +168,17 @@ for input_file in *.in; do
 
   ((compared++))
 
+  # LeetCode 스타일 표시 값 준비
   input_val="$(cat "$input_file" | to_leetcode_value)"
   expected_val="$(cat "$expected_file" | to_leetcode_value)"
   output_val="$(cat "$out_tmp" | to_leetcode_value)"
 
-  # 결과 판정 (우선순위: TLE -> MLE -> RE -> WA -> AC)
+  # 결과 판정
   status=""
   extra=""
-  
-  # 1. TLE 판정 (timeout에 의해 종료되었거나(exit code 124) 측정 시간이 초과된 경우)
-  if [[ "$exit_code" -eq 124 ]] || [[ -n "$TIME_LIMIT_MS" && "$duration_ms" -gt "$TIME_LIMIT_MS" ]]; then
-    status="TLE"
-    extra="(limit: ${TIME_LIMIT_MS} ms)"
-  # 2. MLE 판정 (측정된 메모리가 제한을 초과한 경우, OOM 킬(exit code 137 등) 포함)
-  elif [[ -n "$MEMORY_LIMIT_MB" && -n "$mem_mb" && "$mem_mb" -gt "$MEMORY_LIMIT_MB" ]]; then
-    status="MLE"
-    extra="(limit: ${MEMORY_LIMIT_MB} MB)"
-  # 3. RE 판정 (정상 종료되지 않은 경우)
-  elif [[ "$exit_code" -ne 0 ]]; then
+  if [[ "$exit_code" -ne 0 ]]; then
     status="RE"
     extra="(exit code: $exit_code)"
-  # 4. AC / WA 판정
   else
     if diff -q "$out_tmp" "$expected_file" >/dev/null 2>&1; then
       status="AC"
@@ -236,6 +206,7 @@ for input_file in *.in; do
   rm -f "$out_tmp" "$mem_tmp"
 done
 
+# 요약 (SKIP 제외하고 비교한 케이스 기준)
 if [[ "$compared" -le 0 ]]; then
   echo "Summary: No comparable testcases. (Skipped: $skipped)"
   exit 0
