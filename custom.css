@@ -1,291 +1,249 @@
-/*=====================================================
-  ✨ VSCode Custom CSS - Aesthetic Overhaul
-  =====================================================*/
+/* =========================================================
+   Leapense VS Code Custom Theme (Dark + Light) v1.0
+   - Works with "Custom CSS and JS" Loader (be5invis)
+   - Auto-switches via body classes set by leapense-theme.js
+   ========================================================= */
 
-/* ─────────────── FONT SMOOTHING ─────────────── */
-* {
-  -webkit-font-smoothing: antialiased !important;
-  -moz-osx-font-smoothing: grayscale !important;
+/* ---------- Base knobs you can tweak ---------- */
+:root {
+  --lp-radius: 10px;
+  --lp-radius-lg: 14px;
+  --lp-border: 1px solid rgba(255, 255, 255, 0.08);
+  --lp-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+  --lp-blur: 14px;
+
+  /* Typography (UI) */
+  --lp-ui-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans", sans-serif;
+  --lp-mono-font: ui-monospace, "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* ─────────────── GLOBAL TRANSITIONS ─────────────── */
-/* Smooth transitions on interactive elements */
-.monaco-workbench .part,
-.monaco-workbench .panel,
-.monaco-list-row,
-.tab,
-.action-item,
-.menubar-menu-button {
-  transition: background-color 0.15s ease,
-              opacity 0.15s ease,
-              transform 0.15s ease !important;
+/* The JS adds: body.lp-theme + body.lp-dark OR body.lp-light */
+body.lp-theme {
+  font-family: var(--lp-ui-font) !important;
 }
 
-/* ─────────────── TITLE BAR ─────────────── */
-.titlebar-container {
+/* ---------- Wallpaper / background layer ---------- */
+body.lp-theme::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  /* Subtle gradient “wallpaper” */
+  background:
+    radial-gradient(1200px 800px at 15% 10%, rgba(120, 160, 255, 0.16), transparent 55%),
+    radial-gradient(900px 700px at 75% 20%, rgba(180, 120, 255, 0.10), transparent 60%),
+    radial-gradient(1000px 900px at 40% 90%, rgba(120, 255, 210, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.18));
+  transform: translateZ(0);
+}
+
+/* Noise layer (pure CSS) */
+body.lp-theme::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.6) 0 1px, transparent 1px 2px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.25) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay;
+}
+
+/* Ensure VS Code content sits above wallpaper layers */
+body.lp-theme .monaco-workbench {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Dark theme palette ---------- */
+body.lp-theme.lp-dark {
+  --lp-accent: #7aa2ff;
+  --lp-accent-2: #a78bfa;
+  --lp-surface: rgba(16, 18, 28, 0.70);
+  --lp-surface-2: rgba(20, 22, 34, 0.78);
+  --lp-text: rgba(255, 255, 255, 0.90);
+  --lp-text-dim: rgba(255, 255, 255, 0.70);
+  --lp-outline: rgba(255, 255, 255, 0.10);
+}
+
+/* ---------- Light theme palette ---------- */
+body.lp-theme.lp-light {
+  --lp-accent: #2563eb;
+  --lp-accent-2: #7c3aed;
+  --lp-surface: rgba(250, 250, 252, 0.70);
+  --lp-surface-2: rgba(255, 255, 255, 0.82);
+  --lp-text: rgba(10, 12, 18, 0.92);
+  --lp-text-dim: rgba(10, 12, 18, 0.65);
+  --lp-outline: rgba(10, 12, 18, 0.10);
+}
+
+/* ---------- Frosted glass surfaces ---------- */
+body.lp-theme .part,
+body.lp-theme .monaco-workbench .panel,
+body.lp-theme .monaco-workbench .sidebar,
+body.lp-theme .monaco-workbench .auxiliarybar,
+body.lp-theme .monaco-workbench .activitybar,
+body.lp-theme .monaco-workbench .statusbar {
+  backdrop-filter: blur(var(--lp-blur));
+  -webkit-backdrop-filter: blur(var(--lp-blur));
+}
+
+body.lp-theme .monaco-workbench .part.sidebar,
+body.lp-theme .monaco-workbench .part.auxiliarybar,
+body.lp-theme .monaco-workbench .part.panel,
+body.lp-theme .monaco-workbench .part.editor,
+body.lp-theme .monaco-workbench .part.statusbar,
+body.lp-theme .monaco-workbench .part.activitybar {
+  background: var(--lp-surface) !important;
+  border: var(--lp-border) !important;
+}
+
+/* Round corners on major containers */
+body.lp-theme .monaco-workbench,
+body.lp-theme .monaco-workbench .part.editor > .content,
+body.lp-theme .monaco-workbench .part.panel > .content,
+body.lp-theme .monaco-workbench .part.sidebar > .content,
+body.lp-theme .monaco-workbench .part.auxiliarybar > .content {
+  border-radius: var(--lp-radius-lg);
+  overflow: hidden;
+}
+
+/* Editor group “card” feel */
+body.lp-theme .monaco-workbench .editor-group-container {
+  border-radius: var(--lp-radius-lg);
+  box-shadow: var(--lp-shadow);
+  border: 1px solid var(--lp-outline);
+}
+
+/* ---------- Tabs: cleaner, slightly taller, rounded ---------- */
+body.lp-theme .monaco-workbench .part.editor > .content .editor-group-container > .title {
   background: transparent !important;
 }
 
-.window-title {
-  font-size: 12px !important;
-  opacity: 0.6 !important;
-  font-weight: 400 !important;
+body.lp-theme .monaco-workbench .tabs-container,
+body.lp-theme .monaco-workbench .title.tabs {
+  height: 40px !important;
 }
 
-/* ─────────────── ACTIVITY BAR (Left Icon Bar) ─────────────── */
-.activitybar .action-item .action-label {
-  transition: transform 0.2s ease !important;
+body.lp-theme .monaco-workbench .tab {
+  border-radius: 10px !important;
+  margin: 6px 6px 6px 0 !important;
+  border: 1px solid transparent !important;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
 }
 
-.activitybar .action-item:hover .action-label {
-  transform: scale(1.15) !important;
+body.lp-theme .monaco-workbench .tab:hover {
+  transform: translateY(-1px);
+  border-color: var(--lp-outline) !important;
 }
 
-.activitybar .active-item-indicator {
+/* Active tab highlight */
+body.lp-theme .monaco-workbench .tab.active {
+  background: var(--lp-surface-2) !important;
+  border-color: rgba(122, 162, 255, 0.25) !important;
+}
+
+body.lp-theme.lp-light .monaco-workbench .tab.active {
+  border-color: rgba(37, 99, 235, 0.25) !important;
+}
+
+/* ---------- Command palette / quick input: “modal” card ---------- */
+body.lp-theme .quick-input-widget {
+  border-radius: var(--lp-radius-lg) !important;
+  border: 1px solid var(--lp-outline) !important;
+  box-shadow: var(--lp-shadow) !important;
+  background: var(--lp-surface-2) !important;
+  backdrop-filter: blur(calc(var(--lp-blur) + 6px));
+}
+
+/* Optional dim behind command palette (JS toggles lp-quickopen-open) */
+body.lp-theme.lp-quickopen-open .monaco-workbench::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.28);
+  z-index: 999;
+  pointer-events: none;
+}
+
+/* ---------- Scrollbars (WebKit) ---------- */
+body.lp-theme ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+body.lp-theme ::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  background-color: rgba(255,255,255,0.18);
+}
+body.lp-theme.lp-light ::-webkit-scrollbar-thumb {
+  background-color: rgba(10,12,18,0.18);
+}
+body.lp-theme ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255,255,255,0.28);
+}
+body.lp-theme.lp-light ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(10,12,18,0.28);
+}
+
+/* ---------- Status bar: slightly cleaner ---------- */
+body.lp-theme .monaco-workbench .part.statusbar {
+  border-radius: var(--lp-radius-lg) !important;
+}
+body.lp-theme .monaco-workbench .part.statusbar .statusbar-item {
+  border-radius: 999px !important;
+}
+
+/* ---------- Explorer & lists: softer selection ---------- */
+body.lp-theme .monaco-list-row {
   border-radius: 8px !important;
 }
-
-/* ─────────────── SIDEBAR ─────────────── */
-/* Frosted glass effect */
-.sidebar,
-.auxiliarybar {
-  background-color: rgba(30, 30, 30, 0.85) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+body.lp-theme .monaco-list-row.focused,
+body.lp-theme .monaco-list-row.selected {
+  outline: 1px solid rgba(122, 162, 255, 0.35) !important;
+}
+body.lp-theme.lp-light .monaco-list-row.focused,
+body.lp-theme.lp-light .monaco-list-row.selected {
+  outline: 1px solid rgba(37, 99, 235, 0.30) !important;
 }
 
-/* Tree item hover effect */
-.monaco-list .monaco-list-row:hover {
-  background-color: rgba(255, 255, 255, 0.04) !important;
-  border-radius: 4px !important;
+/* ---------- Monospace preference for editor surfaces ---------- */
+body.lp-theme .monaco-editor,
+body.lp-theme .monaco-editor * {
+  font-family: var(--lp-mono-font) !important;
 }
 
-/* ─────────────── TABS ─────────────── */
-.tab {
-  border-radius: 8px 8px 0 0 !important;
-  margin-top: 2px !important;
-  margin-left: 2px !important;
-  border: none !important;
-  height: 36px !important;
-  line-height: 36px !important;
+/* ---------- Slight “inactive window” dim (JS toggles lp-blurred) ---------- */
+body.lp-theme.lp-blurred .monaco-workbench {
+  filter: saturate(0.92) brightness(0.92);
 }
 
-.tab.active {
-  background: rgba(255, 255, 255, 0.06) !important;
-  font-weight: 500 !important;
+/* ---------- Tiny accent line on Activity Bar ---------- */
+body.lp-theme .monaco-workbench .part.activitybar {
+  position: relative;
+}
+body.lp-theme .monaco-workbench .part.activitybar::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  right: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--lp-accent), transparent);
+  opacity: 0.55;
 }
 
-.tabs-container {
-  padding-top: 2px !important;
-}
-
-/* Remove thick active tab border, use subtle bottom glow */
-.tab.active::after {
-  content: '' !important;
-  position: absolute !important;
-  bottom: 0 !important;
-  left: 15% !important;
-  width: 70% !important;
-  height: 2px !important;
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(100, 160, 255, 0.8),
-    transparent
-  ) !important;
-  border-radius: 2px !important;
-}
-
-/* ─────────────── EDITOR ─────────────── */
-/* Cursor glow effect */
-.cursor {
-  background: linear-gradient(
-    180deg,
-    rgba(100, 180, 255, 0.9),
-    rgba(130, 100, 255, 0.9)
-  ) !important;
-  box-shadow: 0 0 8px rgba(100, 160, 255, 0.5),
-              0 0 16px rgba(100, 160, 255, 0.2) !important;
-  border-radius: 2px !important;
-  width: 2.5px !important;
-}
-
-/* Current line highlight - softer */
-.current-line {
-  border: none !important;
-  background-color: rgba(255, 255, 255, 0.03) !important;
-  border-radius: 2px !important;
-}
-
-/* Selection highlight */
-.selected-text {
-  background-color: rgba(100, 160, 255, 0.15) !important;
-  border-radius: 3px !important;
-}
-
-/* Line numbers */
-.line-numbers {
-  opacity: 0.35 !important;
-  transition: opacity 0.2s ease !important;
-  font-size: 0.95em !important;
-}
-
-.line-numbers.active-line-number {
-  opacity: 1 !important;
-  font-weight: 600 !important;
-  color: rgba(130, 180, 255, 0.9) !important;
-}
-
-/* ─────────────── SCROLLBAR ─────────────── */
-/* Thin, minimal scrollbar */
-.slider {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-radius: 10px !important;
-  transition: background 0.2s ease, width 0.2s ease !important;
-}
-
-.slider:hover {
-  background: rgba(255, 255, 255, 0.18) !important;
-}
-
-/* Invisible scrollbar track */
-.scrollbar {
-  background: transparent !important;
-}
-
-/* Vertical scrollbar width */
-.invisible.scrollbar.vertical .slider {
-  width: 6px !important;
-  min-width: 6px !important;
-}
-
-/* ─────────────── MINIMAP ─────────────── */
-.minimap {
-  opacity: 0.4 !important;
-  transition: opacity 0.3s ease !important;
-}
-
-.minimap:hover {
-  opacity: 0.8 !important;
-}
-
-/* ─────────────── PANEL (Terminal, Output, etc.) ─────────────── */
-.panel {
-  background-color: rgba(20, 20, 25, 0.9) !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-/* Terminal cursor glow */
-.terminal .xterm-cursor-layer .xterm-cursor {
-  box-shadow: 0 0 6px rgba(100, 255, 180, 0.5) !important;
-}
-
-/* ─────────────── COMMAND PALETTE ─────────────── */
-.quick-input-widget {
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-              0 0 0 1px rgba(255, 255, 255, 0.05) !important;
-  backdrop-filter: blur(16px) !important;
-  top: 15% !important;
-}
-
-.quick-input-header {
-  padding: 8px 12px !important;
-}
-
-.quick-input-widget .monaco-inputbox {
-  border-radius: 8px !important;
-  padding: 4px 8px !important;
-}
-
-/* Command palette list items */
-.quick-input-list .monaco-list-row {
-  border-radius: 6px !important;
-  margin: 1px 6px !important;
-  padding: 0 6px !important;
-}
-
-/* ─────────────── TOOLTIPS / HOVER WIDGETS ─────────────── */
-.monaco-hover {
-  border-radius: 8px !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-  backdrop-filter: blur(12px) !important;
-}
-
-/* ─────────────── SUGGEST WIDGET (Autocomplete) ─────────────── */
-.editor-widget.suggest-widget {
-  border-radius: 10px !important;
-  overflow: hidden !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35) !important;
-}
-
-.suggest-widget .monaco-list-row {
-  border-radius: 4px !important;
-}
-
-/* ─────────────── NOTIFICATIONS ─────────────── */
-.notifications-center,
-.notification-toast {
-  border-radius: 10px !important;
-  overflow: hidden !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* ─────────────── BREADCRUMBS ─────────────── */
-.breadcrumbs-below-tabs {
-  opacity: 0.6 !important;
-  font-size: 0.9em !important;
-  transition: opacity 0.2s ease !important;
-  padding-left: 12px !important;
-}
-
-.breadcrumbs-below-tabs:hover {
-  opacity: 1 !important;
-}
-
-/* ─────────────── EDITOR GROUPS BORDER ─────────────── */
-.editor-group-container .editor-group-letter {
-  border-radius: 4px !important;
-}
-
-/* ─────────────── BADGES ─────────────── */
-.badge .badge-content {
-  border-radius: 10px !important;
-  font-size: 10px !important;
-  padding: 2px 5px !important;
-}
-
-/* ─────────────── BUTTONS ─────────────── */
-.monaco-button {
-  border-radius: 6px !important;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease !important;
-}
-
-.monaco-button:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* ─────────────── FIND WIDGET ─────────────── */
-.find-widget {
-  border-radius: 0 0 10px 10px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-  overflow: hidden !important;
-}
-
-/* ─────────────── INDENT GUIDES ─────────────── */
-.view-overlays .cigr {
-  opacity: 0.5 !important;
-  transition: opacity 0.2s ease !important;
-}
-
-/* ─────────────── STATUS BAR ─────────────── */
-.statusbar {
-  font-size: 11.5px !important;
-}
-
-.statusbar .statusbar-item a {
-  border-radius: 4px !important;
-  transition: background-color 0.15s ease !important;
+/* ---------- Your injected clock style (JS creates .lp-clock) ---------- */
+body.lp-theme .lp-clock {
+  padding: 0 10px !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--lp-outline) !important;
+  background: color-mix(in srgb, var(--lp-surface-2) 85%, transparent) !important;
+  font-family: var(--lp-mono-font) !important;
+  letter-spacing: 0.2px;
 }
