@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+shopt -s nullglob
+
+###############################################################################
+# 설정 및 인자 파싱 (Time Limit, Memory Limit)
+###############################################################################
+TIME_LIMIT_MS=""
+MEMORY_LIMIT_MB=""
+
+# -t: 시간 제한 (ms 단위), -m: 메모리 제한 (MB 단위)
+while getopts "t:m:h" opt; do
+  case "$opt" in
+    t) TIME_LIMIT_MS="$OPTARG" ;;
+    m) MEMORY_LIMIT_MB="$OPTARG" ;;
+    h|*) 
+      echo "Usage: $0 [-t time_limit_ms] [-m memory_limit_mb]"
+      exit 1
+      ;;
+  esac
+done
+shift "$((OPTIND -1))"
+
+###############################################################################
+# 실행 커맨드 설정 (언어: C/C++)
+###############################################################################
+# main.cpp가 내용이 있으면 C++ 우선, 아니면 main.c를 사용합니다.
+if [[ -s "main.cpp" ]]; then
+  g++ -std=gnu++26 -O2 -Wall -Wextra -pedantic -lm main.cpp -o main
+elif [[ -s "main.c" ]]; then
+  gcc -std=c23 -O2 -Wall -Wextra -pedantic -lm main.c -o main
+else
+  # 둘 다 비어 있으면(처음 생성 직후) 일단 C++로 시도합니다.
+  g++ -std=gnu++26 -O2 -Wall -Wextra -pedantic -lm main.cpp -o main
+fi
+
+RUN_CMD=(./main)
+
+# 색상 사용 여부: stdout이 터미널이고, NO_COLOR가 없을 때만 활성화
+USE_COLOR=0
+if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+  USE_COLOR=1
+fi
+
+ESC=$'\033'
+RESET="${ESC}[0m"
+
+print_status_badge() {
+  local status="$1"
+
+  if [[ "$USE_COLOR" -eq 0 ]]; then
+    printf "%s" "$status"
+    return 0
+  fi
+
+  case "$status" in
+    AC)   printf "%s" "${ESC}[30;42m AC ${RESET}" ;;  # 검정 글자 + 초록 배경
+    WA)   printf "%s" "${ESC}[97;41m WA ${RESET}" ;;  # 흰 글자 + 빨강 배경
+    RE)   printf "%s" "${ESC}[97;45m RE ${RESET}" ;;  # 흰 글자 + 자주 배경
+    TLE)  printf "%s" "${ESC}[30;43m TLE ${RESET}" ;; # 검정 글자 + 노랑 배경
+    MLE)  printf "%s" "${ESC}[97;44m MLE ${RESET}" ;; # 흰 글자 + 파랑 배경
+    SKIP) printf "%s" "${ESC}[30;47m SKIP ${RESET}" ;;# 검정 글자 + 회색/흰 배경
+    *)    printf "%s" "$status" ;;
+  esac
+}
+
+print_result_line() {
+  local status="$1"
+  local extra="${2:-}"
+  printf "  result   = "
+  print_status_badge "$status"
+  [[ -n "$extra" ]] && printf " %s" "$extra"
+  printf "\n"
+}
+
+###############################################################################
+# 기대 출력 파일 매핑 규칙
+###############################################################################
+find_expected() {
+  local input="$1"
+  local base="${input%.in}"
+
+  if [[ -f "${base}.out" ]]; then
+    echo "${base}.out"
+    return 0
+  fi
+
+  if [[ "$base" =~ ([0-9]+)$ ]]; then
+    local n="${BASH_REMATCH[1]}"
+    if [[ -f "output${n}.out" ]]; then
+      echo "output${n}.out"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+to_leetcode_value() {
+  python3 -c '
+import sys, json
+
+text = sys.stdin.read()
+text = text.rstrip("\r\n")
+
+if text == "":
+    print("[]")
+    raise SystemExit
+
+lines = text.splitlines()
+
+if len(lines) == 1:
+    s = lines[0].strip()
+    try:
+        obj = json.loads(s)
+        print(json.dumps(obj, ensure_ascii=False))
+        raise SystemExit
+    except Exception:
+        pass
+
+arr = [ln.rstrip("\r\n") for ln in lines]
+print(json.dumps(arr, ensure_ascii=False))
+'
+}
+
+###############################################################################
+# time(1) 설정 및 timeout 설정
+###############################################################################
+TIME_CMD="/usr/bin/time"
+HAS_GNU_TIME=0
+if "$TIME_CMD" --version >/dev/null 2>&1; then
+  HAS_GNU_TIME=1
+fi
+
+TIMEOUT_CMD=()
+if [[ -n "$TIME_LIMIT_MS" ]]; then
+  # timeout 명령어는 초 단위를 받으므로 ms를 초로 변환 (예: 1500 -> 1.5)
+  TIMEOUT_SEC=$(awk -v ms="$TIME_LIMIT_MS" 'BEGIN { printf "%.3f", ms/1000 }')
+  TIMEOUT_CMD=("timeout" "${TIMEOUT_SEC}s")
+fi
+
+accepted=0
+total=0
+skipped=0
+compared=0
+
+for input_file in *.in; do
+  ((total++))
+  base="${input_file%.in}"
+
+  if ! expected_file="$(find_expected "$input_file")"; then
+    echo "Case: $input_file"
+    echo "  input    = $(cat "$input_file" | to_leetcode_value)"
+    echo "  expected = []"
+    echo "  output   = []"
+    echo "  result   = SKIP (expected output not found)"
+    echo
+    ((skipped++))
+    continue
+  fi
+
+  out_tmp="$(mktemp)"
+  mem_tmp="$(mktemp)"
+
+  start_ns="$(date +%s%N)"
+
+  # 실행 + 메모리 측정 (timeout이 설정되어 있다면 적용)
+  exit_code=0
+  if [[ "$HAS_GNU_TIME" -eq 1 ]]; then
+    "$TIME_CMD" -f "%M" -o "$mem_tmp" "${TIMEOUT_CMD[@]}" "${RUN_CMD[@]}" < "$input_file" > "$out_tmp" || exit_code=$?
+    mem_kb="$(cat "$mem_tmp" 2>/dev/null || true)"
+    mem_mb=""
+    [[ -n "${mem_kb:-}" ]] && mem_mb="$(( mem_kb / 1024 ))"
+  else
+    "$TIME_CMD" -l "${TIMEOUT_CMD[@]}" "${RUN_CMD[@]}" < "$input_file" > "$out_tmp" 2> "$mem_tmp" || exit_code=$?
+    mem_bytes="$(awk '/maximum resident set size/ {print $1; exit}' "$mem_tmp" 2>/dev/null || true)"
+    mem_kb=""
+    mem_mb=""
+    if [[ -n "${mem_bytes:-}" ]]; then
+      mem_kb="$(( mem_bytes / 1024 ))"
+      mem_mb="$(( mem_kb / 1024 ))"
+    fi
+  fi
+
+  end_ns="$(date +%s%N)"
+  duration_ms="$(( (end_ns - start_ns) / 1000000 ))"
+
+  ((compared++))
+
+  input_val="$(cat "$input_file" | to_leetcode_value)"
+  expected_val="$(cat "$expected_file" | to_leetcode_value)"
+  output_val="$(cat "$out_tmp" | to_leetcode_value)"
+
+  # 결과 판정 (우선순위: TLE -> MLE -> RE -> WA -> AC)
+  status=""
+  extra=""
+  
+  # 1. TLE 판정 (timeout에 의해 종료되었거나(exit code 124) 측정 시간이 초과된 경우)
+  if [[ "$exit_code" -eq 124 ]] || [[ -n "$TIME_LIMIT_MS" && "$duration_ms" -gt "$TIME_LIMIT_MS" ]]; then
+    status="TLE"
+    extra="(limit: ${TIME_LIMIT_MS} ms)"
+  # 2. MLE 판정 (측정된 메모리가 제한을 초과한 경우, OOM 킬(exit code 137 등) 포함)
+  elif [[ -n "$MEMORY_LIMIT_MB" && -n "$mem_mb" && "$mem_mb" -gt "$MEMORY_LIMIT_MB" ]]; then
+    status="MLE"
+    extra="(limit: ${MEMORY_LIMIT_MB} MB)"
+  # 3. RE 판정 (정상 종료되지 않은 경우)
+  elif [[ "$exit_code" -ne 0 ]]; then
+    status="RE"
+    extra="(exit code: $exit_code)"
+  # 4. AC / WA 판정
+  else
+    if diff -q "$out_tmp" "$expected_file" >/dev/null 2>&1; then
+      status="AC"
+      # 만약 diff_${base}.patch가 존재한다면 삭제
+      if [[ -f "diff_${base}.patch" ]]; then
+        rm "diff_${base}.patch"
+      fi
+      ((accepted++))
+    else
+      status="WA"
+      diff -u "$expected_file" "$out_tmp" > "diff_${base}.patch" || true
+      extra="(see diff_${base}.patch)"
+    fi
+  fi
+
+  # 출력
+  echo "Case: $input_file"
+  echo "  input    = $input_val"
+  echo "  output   = $output_val"
+  echo "  expected = $expected_val"
+  if [[ -n "${mem_kb:-}" ]]; then
+    echo "  stats    = ${duration_ms} ms, MaxRSS ${mem_kb} KB (${mem_mb} MB)"
+  else
+    echo "  stats    = ${duration_ms} ms, MaxRSS N/A"
+  fi
+  print_result_line "$status" "$extra"
+  echo
+
+  rm -f "$out_tmp" "$mem_tmp"
+done
+
+if [[ "$compared" -le 0 ]]; then
+  echo "Summary: No comparable testcases. (Skipped: $skipped)"
+  exit 0
+fi
+
+percent="$(awk -v a="$accepted" -v t="$compared" 'BEGIN { printf "%.2f", (a*100.0)/t }')"
+echo "Summary: ${accepted}/${compared} accepted (${percent}%).  (Skipped: ${skipped}, Total: ${total})"
