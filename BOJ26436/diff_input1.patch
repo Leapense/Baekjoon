@@ -1,0 +1,7 @@
+--- output1.out	2026-03-06 23:41:38.824588979 +0900
++++ /tmp/tmp.F0IAyOwHNO	2026-03-07 18:32:44.242076482 +0900
+@@ -1,2 +1,2 @@
+ Case #1: 3
+-Case #2: 5
+\ No newline at end of file
++Case #2: 5
