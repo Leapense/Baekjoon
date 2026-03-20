@@ -1,0 +1,9 @@
+case_index,input_file,x_value,time_ms,mem_kb,mem_mb,status,exit_code,x_source
+1,"input1.in",1,5,4116,4,AC,0,filename
+2,"input2.in",2,6,4124,4,AC,0,filename
+3,"input3.in",3,6,4156,4,AC,0,filename
+4,"input4.in",4,6,4164,4,AC,0,filename
+5,"input5.in",5,6,4124,4,AC,0,filename
+6,"input6.in",6,6,4148,4,AC,0,filename
+7,"input7.in",7,6,4112,4,AC,0,filename
+8,"input8.in",8,6,4120,4,AC,0,filename
