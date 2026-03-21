@@ -1,0 +1,7 @@
+5
+ClearCreek 0 0
+MinesM 20 10
+SouthTable -20 -10
+WoodysPizza 10 10
+ColoradoSchoolOfMines 20 -10
+ColoradoSchoolOfMines ClearCreek WoodysPizza SouthTable  MinesM
